@@ -1,22 +1,37 @@
 # Controlify Chords
 
-A standalone Fabric addon for Controlify that adds configurable ordered controller-button chords.
+A standalone Fabric client addon intended to provide configurable ordered controller-button chords for Controlify.
 
-## Target compatibility
+## Baseline target
 
-- Minecraft Java Edition 26.2
-- Fabric Loader 0.19 or newer
-- Controlify 3.5.3+mc26.2
+- Minecraft Java Edition **26.2**
+- Fabric Loader **0.19.0+**
+- Controlify **3.5.3+mc26.2**
+- Java **25**
 
-## Status
+The version values are centralized in `gradle.properties`. New Minecraft/Controlify versions must be tested in CI before being declared supported; future versions are not assumed compatible just because this project is structured for upgrades.
 
-Initial project setup. Input interception, configuration UI, and runtime behavior are not yet verified in-game.
+## Build automation
 
-## Intended behavior
+GitHub Actions runs on **every push/commit to every branch**, on pull requests, and manually. A successful build uploads the JAR under the run's **Artifacts** section for 14 days. A failed build uploads available Gradle reports to help diagnose the failure.
 
-- Ordered modifier sequences followed by a short trigger press.
-- Releasing any required modifier cancels the pending chord.
-- Only explicitly configured triggers participate in chord handling; other inputs retain normal behavior.
-- Configurable actions and careful handling of overlapping ordinary bindings.
+Open **Actions → Build → latest run → Artifacts** to download the compiled JAR.
 
-This project is independent of Controlify and does not redistribute Controlify.
+The manual workflow also accepts an optional Minecraft version override for compatibility experiments. This does not guarantee that the selected version is supported by the chosen Loom, loader, or Controlify release.
+
+## Current implementation status
+
+This is the foundational project skeleton. It contains the Fabric client entrypoint, metadata, centralized version settings, and CI workflow. The actual chord engine, configuration screen, and safe handling of overlapping ordinary bindings still need implementation and in-game testing.
+
+## Intended input semantics
+
+- Modifier order matters: `LB → RB → A` differs from `RB → LB → A`.
+- Required modifiers remain held until the trigger is released; releasing one cancels the chord.
+- Trigger presses execute on release, once.
+- Only explicitly configured triggers participate in chord interception.
+- Normal input must remain unchanged when no matching chord is active.
+- Ordinary bindings that overlap a chord must not fire twice.
+
+## Upgrade policy
+
+Keep version pins centralized, test each new Minecraft/Controlify combination in CI, and update compatibility metadata only after a successful build and runtime verification. See [GitHub Actions](https://github.com/youhaoyu159028/controlify-chords/actions).

@@ -1,0 +1,59 @@
+plugins {
+    id "fabric-loom" version "${loom_version}"
+    id "maven-publish"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven { url = "https://maven.fabricmc.net/" }
+    maven { url = "https://api.modrinth.com/maven" }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // Controlify is a runtime dependency of this addon. Keep the exact baseline
+    // version explicit; move it to a newer compatible release after CI verification.
+    modCompileOnly "maven.modrinth:controlify:3.5.3+mc26.2"
+}
+
+def targetJava = Integer.parseInt(project.java_version)
+tasks.withType(JavaCompile).configureEach {
+    options.release = targetJava
+    options.encoding = "UTF-8"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(targetJava)
+    withSourcesJar()
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(Jar).configureEach {
+    from("LICENSE") {
+        rename { fileName -> "${fileName}_${project.base.archivesName.get()}" }
+    }
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {}
+}
