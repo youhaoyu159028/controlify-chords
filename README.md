@@ -12,7 +12,7 @@
 | Fabric Loader | **0.19.3**（最低，向上兼容） |
 | Controlify | **3.5.3+mc26.2** |
 | Java | **25** |
-| Gradle | **9.5** |
+| Gradle | **9.8.1** |
 | Loom | **1.18.4**，插件 id `net.fabricmc.fabric-loom` |
 
 `minecraft` 依赖写的是 `>=26.2`，为后续版本留出向上兼容空间；但**新版本必须经过 CI + 实机验证**才敢宣称支持。
@@ -129,18 +129,18 @@ Controlify 的公开 API **没有**“吞掉某个绑定输出”的能力（`In
 ## 构建
 
 ```bash
-gradle build        # 需要 Gradle 9.5 + JDK 25
+gradle build        # 需要 Gradle 9.8.1 + JDK 25
 ```
 
 产物：`build/libs/controlify-chords-0.2.0.jar`。
 
-> 为什么不是 `./gradlew`：仓库目前没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.5；本地请装 Gradle 9.5 或自己 `gradle wrapper --gradle-version 9.5`。
+> 为什么不是 `./gradlew`：仓库目前没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.5；本地请装 Gradle 9.5 或自己 `gradle wrapper --gradle-version 9.8.1`。
 
 ### 之前 CI 为什么失败
 
 | 问题 | 后果 | 修复 |
 |---|---|---|
-| JDK 25 + Gradle 8.14.3 | Gradle 8.14 不支持运行在 Java 25 上（需要 9.1+），构建在启动阶段就失败 | 升到 Gradle 9.5 |
+| JDK 25 + Gradle 8.14.3 | Gradle 8.14 不支持运行在 Java 25 上（需要 9.1+），构建在启动阶段就失败 | 升到 Gradle 9.8.1 |
 | `build.gradle` 没有 `mappings` | Loom 在混淆版本上会报错；26.x 是非混淆版本，本就不需要 mappings | 换用 `net.fabricmc.fabric-loom` 插件，去掉 mappings |
 | 26.1–26.3 没有 Yarn 映射 | 无法按 Yarn 名写代码 | 26.x 用 Mojang 官方名（`Component`、`Identifier`、`KeyMapping`） |
 | `loom 1.15-SNAPSHOT` | 只有 alpha，且旧 Loom 不认非混淆流程 | 用 Loom 1.18.4 + 新插件 id |

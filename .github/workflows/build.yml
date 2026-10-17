@@ -36,7 +36,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           # Gradle 8.14 不能运行在 JDK 25 上；Java 25 需要 Gradle 9.1+
-          gradle-version: "9.5"
+          gradle-version: "9.8.1"
 
       - name: Build
         run: |
