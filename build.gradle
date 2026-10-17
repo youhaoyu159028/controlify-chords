@@ -1,5 +1,6 @@
 plugins {
-    id "fabric-loom" version "${loom_version}"
+    // 注意：MC 26.x 是非混淆版本，必须用 net.fabricmc.fabric-loom（不是 fabric-loom）
+    id "net.fabricmc.fabric-loom" version "${loom_version}"
     id "maven-publish"
 }
 
@@ -13,16 +14,29 @@ base {
 repositories {
     maven { url = "https://maven.fabricmc.net/" }
     maven { url = "https://api.modrinth.com/maven" }
+    maven { url = "https://maven.shedaniel.me/" }
+    maven { url = "https://maven.terraformersmc.com/releases/" }
     mavenCentral()
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Controlify is a runtime dependency of this addon. Keep the exact baseline
-    // version explicit; move it to a newer compatible release after CI verification.
-    modCompileOnly "maven.modrinth:controlify:3.5.3+mc26.2"
+    // 26.x 的非混淆 Loom 不再提供 modImplementation/modCompileOnly，
+    // 直接用标准的 implementation / compileOnly / api。
+    // Fabric API 是 bundle（外层 jar 只有嵌套 jar），按模块依赖才能拿到 ClientTickEvents。
+    implementation "net.fabricmc.fabric-api:fabric-lifecycle-events-v1:${project.fabric_lifecycle_version}"
+
+    // Controlify：只编译期依赖，不打包、不修改
+    compileOnly "maven.modrinth:controlify:${project.controlify_version}"
+    // 想在本机 runClient 调试时打开：
+    // runtimeOnly "maven.modrinth:controlify:${project.controlify_version}"
+
+    api("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}") {
+        exclude group: "net.fabricmc.fabric-api"
+    }
+    compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 def targetJava = Integer.parseInt(project.java_version)
@@ -47,13 +61,4 @@ tasks.withType(Jar).configureEach {
     from("LICENSE") {
         rename { fileName -> "${fileName}_${project.base.archivesName.get()}" }
     }
-}
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-    repositories {}
 }

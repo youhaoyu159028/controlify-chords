@@ -8,12 +8,6 @@ on:
     branches:
       - "**"
   workflow_dispatch:
-    inputs:
-      minecraft_version:
-        description: "Minecraft version override (experimental)"
-        required: false
-        type: string
-        default: ""
 
 permissions:
   contents: read
@@ -24,15 +18,15 @@ concurrency:
 
 jobs:
   build:
-    name: Build mod (Minecraft ${{ inputs.minecraft_version || vars.MINECRAFT_VERSION || '26.2' }})
+    name: Build mod (Minecraft 26.2)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
@@ -41,14 +35,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.14.3"
+          # Gradle 8.14 不能运行在 JDK 25 上；Java 25 需要 Gradle 9.1+
+          gradle-version: "9.8.1"
 
       - name: Build
-        env:
-          MC_VERSION_OVERRIDE: ${{ inputs.minecraft_version }}
-        run: gradle --no-daemon build
+        run: |
+          set +e
+          gradle --no-daemon build --console=plain --stacktrace 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          # 把编译错误变成 GitHub 注解，便于在 Actions 页面直接看到
+          grep -E "error:|FAILURE:|What went wrong|Could not |Caused by:" build.log | head -30 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          exit "$status"
 
-      - name: Upload JAR artifacts
+      - name: Upload JAR and build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -56,5 +57,6 @@ jobs:
           path: |
             build/libs/*.jar
             build/reports/**
+            build.log
           if-no-files-found: warn
           retention-days: 14
