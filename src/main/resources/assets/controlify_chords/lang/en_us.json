@@ -1,0 +1,24 @@
+{
+  "controlifychords.binding.category": "Chords",
+  "controlifychords.binding.key": "Chord Key %s",
+  "controlifychords.binding.key.desc": "A dedicated key for chords. Bind it to a controller button in Controlify, then reference it in the chord config.",
+
+  "controlifychords.config.title": "Controlify Chords",
+  "controlifychords.config.general": "General",
+  "controlifychords.config.debug": "Debug logging",
+  "controlifychords.config.debug.tip": "Log chord state transitions.",
+  "controlifychords.config.help": "Hold the modifier keys in the configured order, then tap the trigger key. Releasing any modifier cancels the chord. The action runs when the trigger is released.",
+  "controlifychords.config.chord": "Chord %s",
+  "controlifychords.config.enabled": "Enabled",
+  "controlifychords.config.name": "Display name",
+  "controlifychords.config.modifier": "Modifier %s (binding ID)",
+  "controlifychords.config.trigger": "Trigger (binding ID)",
+  "controlifychords.config.binding.tip": "Examples: controlifychords:key_1 ... key_8, controlify:jump, controlify:sneak. Order matters for modifiers.",
+  "controlifychords.config.action_type": "Action type",
+  "controlifychords.config.action_value": "Action value",
+  "controlifychords.config.action_value.tip": "KEY_MAPPING: a key name such as key.swapOffhand. COMMAND: e.g. /spawn. CUSTOM: a registered action id.",
+  "controlifychords.config.min_hold": "Min modifier hold (ticks)",
+  "controlifychords.config.max_tap": "Max trigger tap (ticks)",
+  "controlifychords.config.cooldown": "Cooldown (ticks)",
+  "controlifychords.config.available": "Available binding IDs: %s"
+}
