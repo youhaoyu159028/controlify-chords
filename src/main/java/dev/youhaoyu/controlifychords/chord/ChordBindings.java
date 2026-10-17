@@ -54,6 +54,11 @@ public final class ChordBindings {
         }
     }
 
+    /** 物理按键 ID，例如 {@code controlify:button/dpad_up}。 */
+    public static boolean isRawInput(String id) {
+        return id != null && id.startsWith("controlify:button/");
+    }
+
     public static InputBindingSupplier key(int index) {
         return index >= 0 && index < KEYS.length ? KEYS[index] : null;
     }
@@ -88,7 +93,7 @@ public final class ChordBindings {
     }
 
     public static String idHint() {
-        return "controlifychords:key_1 ... controlifychords:key_8, controlify:jump, controlify:sneak, controlify:attack";
+        return "controlify:button/dpad_up, controlify:button/south, controlify:button/north, controlifychords:key_1 ... key_8";
     }
 
     public static List<String> knownIds() {
