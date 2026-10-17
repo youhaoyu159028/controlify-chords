@@ -21,18 +21,22 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // 26.x 的非混淆 Loom 不再提供 modImplementation/modCompileOnly，
+    // 直接用标准的 implementation / compileOnly / api。
+    // Fabric API 是 bundle（外层 jar 只有嵌套 jar），按模块依赖才能拿到 ClientTickEvents。
+    implementation "net.fabricmc.fabric-api:fabric-lifecycle-events-v1:${project.fabric_lifecycle_version}"
 
     // Controlify：只编译期依赖，不打包、不修改
-    modCompileOnly "maven.modrinth:controlify:${project.controlify_version}"
+    compileOnly "maven.modrinth:controlify:${project.controlify_version}"
     // 想在本机 runClient 调试时打开：
-    // modLocalRuntime "maven.modrinth:controlify:${project.controlify_version}"
+    // runtimeOnly "maven.modrinth:controlify:${project.controlify_version}"
 
-    modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}") {
+    api("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}") {
         exclude group: "net.fabricmc.fabric-api"
     }
-    modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+    compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 def targetJava = Integer.parseInt(project.java_version)
