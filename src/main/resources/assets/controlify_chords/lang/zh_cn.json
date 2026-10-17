@@ -2,7 +2,6 @@
   "controlifychords.binding.category": "组合键",
   "controlifychords.binding.key": "和弦键 %s",
   "controlifychords.binding.key.desc": "专用于组合键的键。请在 Controlify 中把它绑到手柄按钮，然后在和弦配置里引用它。",
-
   "controlifychords.config.title": "Controlify 和弦",
   "controlifychords.config.general": "通用",
   "controlifychords.config.debug": "调试日志",
@@ -13,7 +12,7 @@
   "controlifychords.config.name": "显示名称",
   "controlifychords.config.modifier": "修饰键 %s（绑定 ID）",
   "controlifychords.config.trigger": "触发键（绑定 ID）",
-  "controlifychords.config.binding.tip": "例如：controlifychords:key_1 ... key_8、controlify:jump、controlify:sneak。修饰键的顺序有意义。",
+  "controlifychords.config.binding.tip": "例如：controlify:button/dpad_up（保留原功能）、controlify:button/north、controlifychords:key_1。修饰键顺序有意义。",
   "controlifychords.config.action_type": "动作类型",
   "controlifychords.config.action_value": "动作参数",
   "controlifychords.config.action_value.tip": "KEY_MAPPING：按键名，如 key.swapOffhand；COMMAND：如 /spawn；CUSTOM：已注册的动作 ID。",

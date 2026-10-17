@@ -51,6 +51,45 @@ IDLE
 
 ---
 
+## 两种成员写法（重要）
+
+### A. 物理按键模式（推荐：保留原功能）
+
+直接写 Controlify 的物理按键 ID，**不要**再把这个按钮绑到 `controlifychords:key_N`：
+
+```json
+"modifiers": ["controlify:button/dpad_up"],
+"trigger": "controlify:button/north"
+```
+
+- 十字上仍然保留它原来的功能（Controlify 里原来的绑定不动）。
+- 长按十字上 → 再轻按 north → 触发和弦。
+- 和弦成立期间，这两个按钮的普通绑定会被 Mixin 临时抑制，避免双触发。
+- 单独轻按十字上（没进入和弦）不会抑制，原功能正常。
+
+常用按钮 ID：
+
+| 按钮 | ID |
+|---|---|
+| 十字上/下/左/右 | `controlify:button/dpad_up` / `dpad_down` / `dpad_left` / `dpad_right` |
+| A/B/X/Y（Xbox 布局） | `controlify:button/south` / `east` / `west` / `north` |
+| LB / RB | `controlify:button/left_shoulder` / `right_shoulder` |
+| L3 / R3 | `controlify:button/left_stick` / `right_stick` |
+| Start / Back | `controlify:button/start` / `back` |
+
+> 一个和弦里的修饰键和触发键必须全是物理按键，或全是绑定 ID，不能混用。
+
+### B. 绑定 ID 模式（专用键）
+
+```json
+"modifiers": ["controlifychords:key_1"],
+"trigger": "controlifychords:key_2"
+```
+
+需要先在 Controlify 里把两个按钮分别绑到 `和弦键 1`、`和弦键 2`。优点是完全不依赖 Mixin；缺点是按钮会被这个绑定占用。
+
+---
+
 ## 配置
 
 `config/controlify-chords.json`：

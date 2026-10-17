@@ -2,7 +2,6 @@
   "controlifychords.binding.category": "Chords",
   "controlifychords.binding.key": "Chord Key %s",
   "controlifychords.binding.key.desc": "A dedicated key for chords. Bind it to a controller button in Controlify, then reference it in the chord config.",
-
   "controlifychords.config.title": "Controlify Chords",
   "controlifychords.config.general": "General",
   "controlifychords.config.debug": "Debug logging",
@@ -13,7 +12,7 @@
   "controlifychords.config.name": "Display name",
   "controlifychords.config.modifier": "Modifier %s (binding ID)",
   "controlifychords.config.trigger": "Trigger (binding ID)",
-  "controlifychords.config.binding.tip": "Examples: controlifychords:key_1 ... key_8, controlify:jump, controlify:sneak. Order matters for modifiers.",
+  "controlifychords.config.binding.tip": "Examples: controlify:button/dpad_up (keeps its normal function), controlify:button/north, controlifychords:key_1. Order matters for modifiers.",
   "controlifychords.config.action_type": "Action type",
   "controlifychords.config.action_value": "Action value",
   "controlifychords.config.action_value.tip": "KEY_MAPPING: a key name such as key.swapOffhand. COMMAND: e.g. /spawn. CUSTOM: a registered action id.",
