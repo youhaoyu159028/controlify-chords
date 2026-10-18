@@ -25,7 +25,7 @@
 
 一条和弦 = **修饰键列表** + **触发键列表**：
 
-1. **修饰键列表 = 一直按住的键**。列表里所有键都按住即成立，**顺序随便**，先按哪个都行。
+1. **修饰键列表 = 一直按住的键**。列表里所有键都按住即成立，**默认顺序随便**；给这条和弦打开 `ordered` 后，就必须严格按列表顺序依次按下。
 2. **触发键列表 = 轻按的键**。其中**任意一个**轻按，都会触发同一条动作。
 3. **修饰键要按住一会儿**：全部按住后再保持 `minModifierHoldTicks`（默认 3 tick）。
 4. **触发键要轻按**：按下后在 `maxTriggerTapTicks`（默认 8 tick）内松开。
@@ -112,6 +112,7 @@ IDLE
       "name": "LB + RB → A/B 交换副手",
       "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
       "triggers": ["controlify:button/south", "controlify:button/east"],
+      "ordered": false,
       "actionType": "key_mapping",
       "actionValue": "key.swapOffhand",
       "minModifierHoldTicks": 3,
@@ -130,6 +131,7 @@ IDLE
 |---|---|
 | `modifiers` | 修饰键列表，1–8 个，不能重复；顺序无所谓，全部按住即可 |
 | `triggers` | 触发键列表，1–8 个；任意一个轻按都会触发 |
+| `ordered` | `false`（默认）顺序随便；`true` 必须按 `modifiers` 列表顺序按下 |
 | `trigger` | **0.3.x 旧字段**，仅为兼容保留；启动时会自动并入 `triggers` 并清空 |
 | `actionType` | `key_mapping` / `command` / `custom` |
 | `actionValue` | 按键名（如 `key.swapOffhand`）、命令（如 `/spawn`）或自定义动作 ID |

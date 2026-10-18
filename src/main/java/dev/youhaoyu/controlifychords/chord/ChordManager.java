@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -317,7 +318,8 @@ public final class ChordManager {
             }
 
             boolean armed = true;
-            int lastModifierPressTick = -1;
+            int firstPressTick = Integer.MAX_VALUE;
+            int lastPressTick = -1;
             if (isRaw()) {
                 if (!buttons.containsAll(rawModifiers)) {
                     armed = false;
@@ -328,7 +330,11 @@ public final class ChordManager {
                             armed = false;
                             break;
                         }
-                        lastModifierPressTick = Math.max(lastModifierPressTick, pressedAt);
+                        firstPressTick = Math.min(firstPressTick, pressedAt);
+                        lastPressTick = Math.max(lastPressTick, pressedAt);
+                    }
+                    if (armed && definition.ordered && !orderMatchesRaw()) {
+                        armed = false;
                     }
                 }
             } else {
@@ -343,9 +349,16 @@ public final class ChordManager {
                         armed = false;
                         break;
                     }
-                    lastModifierPressTick = Math.max(lastModifierPressTick, pressedAt);
+                    firstPressTick = Math.min(firstPressTick, pressedAt);
+                    lastPressTick = Math.max(lastPressTick, pressedAt);
+                }
+                if (armed && definition.ordered && !orderMatchesBindings()) {
+                    armed = false;
                 }
             }
+
+            // 有序：第一个修饰键按住足够久；无序：最后一个按下的修饰键也按住足够久
+            int lastModifierPressTick = definition.ordered ? firstPressTick : lastPressTick;
 
             // 物理按键：和弦成立或已有待触发键时，抑制这些按钮的普通绑定
             if (isRaw() && (armed || pendingRaw != null)) {
@@ -404,6 +417,24 @@ public final class ChordManager {
                     }
                 }
             }
+        }
+
+        /** 有序模式下，实际按下顺序是否与配置列表一致。同一 tick 按下按列表顺序视为一致。 */
+        private boolean orderMatchesRaw() {
+            List<Identifier> sorted = new ArrayList<>(rawModifiers);
+            sorted.sort(Comparator
+                    .comparingInt((Identifier id) -> RAW_PRESS_TICKS.getOrDefault(id, Integer.MAX_VALUE))
+                    .thenComparingInt(rawModifiers::indexOf));
+            return sorted.equals(rawModifiers);
+        }
+
+        private boolean orderMatchesBindings() {
+            List<InputBindingSupplier> sorted = new ArrayList<>(bindModifiers);
+            sorted.sort(Comparator
+                    .comparingInt((InputBindingSupplier s) ->
+                            BINDING_PRESS_TICKS.getOrDefault(s.bindId().toString(), Integer.MAX_VALUE))
+                    .thenComparingInt(bindModifiers::indexOf));
+            return sorted.equals(bindModifiers);
         }
 
         private void fire() {

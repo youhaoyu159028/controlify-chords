@@ -33,6 +33,15 @@ public final class ChordDefinition {
     public List<String> triggers = new ArrayList<>();
 
     /**
+     * 修饰键是否必须按 {@link #modifiers} 的列表顺序按下。
+     * <ul>
+     *   <li>{@code false}（默认）：集合语义，全部按住即可，先后随便；</li>
+     *   <li>{@code true}：0.3.x 的有序语义，{@code LB→RB→A} 与 {@code RB→LB→A} 是两条不同和弦。</li>
+     * </ul>
+     */
+    public boolean ordered = false;
+
+    /**
      * 0.3.x 的旧字段，只用于迁移。
      * {@link ChordsConfig#normalize()} 会把它并入 {@link #triggers} 并清空。
      */
@@ -63,6 +72,7 @@ public final class ChordDefinition {
         c.name = name;
         c.modifiers = new ArrayList<>(modifiers == null ? List.of() : modifiers);
         c.triggers = new ArrayList<>(triggers == null ? List.of() : triggers);
+        c.ordered = ordered;
         c.trigger = trigger;
         c.actionType = actionType;
         c.actionValue = actionValue;

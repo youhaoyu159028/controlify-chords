@@ -66,7 +66,14 @@ public final class ChordsScreen {
                 .setSaveConsumer(value -> chord.name = value == null ? "" : value.trim())
                 .build());
 
-        // 修饰键：一个列表，顺序无所谓，全部按住即可
+        category.addEntry(entries
+                .startBooleanToggle(Component.translatable("controlifychords.config.ordered"), chord.ordered)
+                .setDefaultValue(false)
+                .setTooltip(Component.translatable("controlifychords.config.ordered.tip"))
+                .setSaveConsumer(value -> chord.ordered = value)
+                .build());
+
+        // 修饰键：一个列表，默认顺序无所谓，全部按住即可
         category.addEntry(entries
                 .startStrList(Component.translatable("controlifychords.config.modifiers"),
                         new ArrayList<>(chord.modifiers))

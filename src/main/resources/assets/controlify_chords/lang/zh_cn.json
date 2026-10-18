@@ -6,7 +6,7 @@
   "controlifychords.config.general": "通用",
   "controlifychords.config.debug": "调试日志",
   "controlifychords.config.debug.tip": "输出和弦状态变化。",
-  "controlifychords.config.help": "修饰键列表：顺序无所谓，全部按住即可。触发键列表：其中任意一个轻按都会触发同一动作。松开任意修饰键会取消；动作在触发键松开时执行。",
+  "controlifychords.config.help": "修饰键列表：默认顺序无所谓，全部按住即可；开启“必须按列表顺序”后就要依次按下。触发键列表：任意一个轻按都会触发同一动作。松开任意修饰键会取消；动作在触发键松开时执行。",
   "controlifychords.config.chord": "和弦 %s",
   "controlifychords.config.enabled": "启用",
   "controlifychords.config.name": "显示名称",
@@ -23,5 +23,7 @@
   "controlifychords.config.available": "可用绑定 ID：%s",
   "key.controlifychords.open_config": "打开和弦设置",
   "controlifychords.binding.open_config": "打开和弦设置（手柄）",
-  "controlifychords.binding.open_config.desc": "在 Controlify 里把任意按钮绑到它，按下即可打开和弦配置界面。"
+  "controlifychords.binding.open_config.desc": "在 Controlify 里把任意按钮绑到它，按下即可打开和弦配置界面。",
+  "controlifychords.config.ordered": "修饰键必须按列表顺序按下",
+  "controlifychords.config.ordered.tip": "关（默认）：全部按住即可，先后随便。开：必须严格按列表从上到下依次按下，LB→RB 和 RB→LB 算两条不同和弦（0.3.x 的行为）。"
 }
