@@ -2,7 +2,6 @@ package dev.youhaoyu.controlifychords.chord;
 
 import dev.isxander.controlify.api.ControlifyApi;
 import dev.isxander.controlify.api.bind.InputBinding;
-import dev.isxander.controlify.api.bind.InputBindingSupplier;
 import dev.isxander.controlify.controller.ControllerEntity;
 import dev.youhaoyu.controlifychords.ControlifyChords;
 import dev.youhaoyu.controlifychords.config.ChordsConfig;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,27 +22,23 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * 和弦状态机：<b>修饰键集合</b> + <b>触发键集合</b>。
+ * 和弦状态机：<b>修饰键集合</b> + <b>触发键集合</b>，成员只能是物理按键
+ * {@code controlify:button/xxx}。
  *
- * <p>支持两种成员写法：
+ * <p>语义：
  * <ul>
- *   <li><b>物理按键</b>：{@code controlify:button/dpad_up}。直接读手柄状态，
- *       不需要把这个按钮绑到 {@code controlifychords:key_N}，所以它原来的功能保留。
- *       和弦进行时通过 Mixin 抑制这些按钮的普通绑定，避免双触发。</li>
- *   <li><b>绑定 ID</b>：{@code controlifychords:key_1}、{@code controlify:jump}。
- *       老模式，需要用户自己在 Controlify 里把按钮绑到该绑定。</li>
+ *   <li>修饰键全部按住即成立，顺序默认不重要；</li>
+ *   <li>如果同一组修饰键被配置成多种顺序（{@code LB+RB} 与 {@code RB+LB}），
+ *       这几条会自动按实际按下顺序区分；</li>
+ *   <li>触发键集合里任意一个轻按都会触发同一动作；</li>
+ *   <li>松开时执行，一次按住只执行一次。</li>
  * </ul>
- *
- * <p>语义：修饰键不分先后，全部按住即可；触发键集合里任意一个轻按都会触发同一动作。
  */
 public final class ChordManager {
 
     private static final List<Runtime> RUNTIMES = new ArrayList<>();
-    private static final List<InputBindingSupplier> WATCH_BINDINGS = new ArrayList<>();
     private static final List<Identifier> WATCH_RAW = new ArrayList<>();
-
-    private static final Map<String, Integer> BINDING_PRESS_TICKS = new LinkedHashMap<>();
-    private static final Map<Identifier, Integer> RAW_PRESS_TICKS = new LinkedHashMap<>();
+    private static final Map<Identifier, Integer> RAW_PRESS_TICKS = new HashMap<>();
     private static final Set<Identifier> SUPPRESSED = new HashSet<>();
 
     private static String controllerUid;
@@ -79,19 +73,8 @@ public final class ChordManager {
         ControllerEntity controller = current.get();
         if (!controller.uid().equals(controllerUid)) {
             controllerUid = controller.uid();
-            BINDING_PRESS_TICKS.clear();
             RAW_PRESS_TICKS.clear();
             RUNTIMES.forEach(Runtime::resetTransient);
-        }
-
-        for (InputBindingSupplier supplier : WATCH_BINDINGS) {
-            InputBinding binding = supplier.onOrNull(controller);
-            String id = supplier.bindId().toString();
-            if (binding != null && binding.digitalNow()) {
-                BINDING_PRESS_TICKS.putIfAbsent(id, tickCounter);
-            } else {
-                BINDING_PRESS_TICKS.remove(id);
-            }
         }
 
         Set<Identifier> buttons = controller.input()
@@ -106,7 +89,7 @@ public final class ChordManager {
         }
 
         for (Runtime runtime : RUNTIMES) {
-            runtime.tick(controller, buttons);
+            runtime.tick(buttons);
         }
     }
 
@@ -136,20 +119,18 @@ public final class ChordManager {
     private static void rebuild() {
         dirty = false;
         RUNTIMES.clear();
-        WATCH_BINDINGS.clear();
         WATCH_RAW.clear();
-        BINDING_PRESS_TICKS.clear();
         RAW_PRESS_TICKS.clear();
 
         ChordsConfig config = ConfigManager.get();
+        Set<String> pool = new HashSet<>(config.keyPool);
         Set<String> signatures = new LinkedHashSet<>();
 
-        // 同一组修饰键如果被配置成多种顺序（LB+RB 与 RB+LB），这些和弦就必须按顺序区分；
-        // 只有一种顺序时，顺序随便，避免“必须先按列表顺序”的僵硬感。
+        // 同一组修饰键如果配了多种顺序，这几条必须按顺序区分
         Map<String, Set<String>> modifierOrders = new HashMap<>();
         for (ChordDefinition candidate : config.chords) {
-            if (candidate == null || !candidate.enabled || candidate.modifiers == null
-                    || candidate.modifiers.isEmpty()) {
+            if (candidate == null || !candidate.enabled
+                    || candidate.modifiers == null || candidate.modifiers.isEmpty()) {
                 continue;
             }
             String setKey = new TreeSet<>(candidate.modifiers).toString();
@@ -163,115 +144,83 @@ public final class ChordManager {
                 continue;
             }
             if (chord.modifiers.isEmpty() || chord.triggers.isEmpty()) {
-                ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 已启用但修饰键或触发键列表为空，跳过", i + 1);
+                ControlifyChords.LOGGER.warn("[Chords] #{} 已启用但修饰键或触发键列表为空，跳过", i + 1);
                 continue;
             }
             if (new HashSet<>(chord.modifiers).size() != chord.modifiers.size()
                     || new HashSet<>(chord.triggers).size() != chord.triggers.size()) {
-                ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 的列表里有重复项，跳过", i + 1);
+                ControlifyChords.LOGGER.warn("[Chords] #{} 的列表里有重复项，跳过", i + 1);
                 continue;
             }
-            boolean overlap = chord.modifiers.stream().anyMatch(chord.triggers::contains);
-            if (overlap) {
-                ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 的同一个键同时出现在修饰键和触发键里，跳过", i + 1);
+            if (chord.modifiers.stream().anyMatch(chord.triggers::contains)) {
+                ControlifyChords.LOGGER.warn("[Chords] #{} 的同一个键同时出现在两个列表里，跳过", i + 1);
                 continue;
+            }
+            boolean nonRaw = chord.modifiers.stream().anyMatch(id -> !ChordBindings.isRawInput(id))
+                    || chord.triggers.stream().anyMatch(id -> !ChordBindings.isRawInput(id));
+            if (nonRaw) {
+                ControlifyChords.LOGGER.warn("[Chords] #{} 含有非物理按键 ID（旧版 key_N / controlify:jump 已不支持），跳过", i + 1);
+                continue;
+            }
+            if (!pool.isEmpty()) {
+                boolean outside = chord.modifiers.stream().anyMatch(id -> !pool.contains(id))
+                        || chord.triggers.stream().anyMatch(id -> !pool.contains(id));
+                if (outside) {
+                    ControlifyChords.LOGGER.warn("[Chords] #{} 用了不在“按键池”里的按钮，跳过（先在通用页把按钮加进池）", i + 1);
+                    continue;
+                }
             }
 
-            boolean raw = ChordBindings.isRawInput(chord.modifiers.get(0));
-            boolean mixed = chord.modifiers.stream().anyMatch(id -> ChordBindings.isRawInput(id) != raw)
-                    || chord.triggers.stream().anyMatch(id -> ChordBindings.isRawInput(id) != raw);
-            if (mixed) {
-                ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 混用了物理按键与绑定 ID，跳过", i + 1);
-                continue;
-            }
-
-            String signature = new LinkedHashSet<>(chord.modifiers) + "|" + new LinkedHashSet<>(chord.triggers);
+            String signature = String.join(">", chord.modifiers) + "|" + String.join(">", chord.triggers);
             if (!signatures.add(signature)) {
-                ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 与前面的和弦完全相同，跳过", i + 1);
+                ControlifyChords.LOGGER.warn("[Chords] #{} 与前面的和弦完全相同，跳过", i + 1);
                 continue;
+            }
+
+            List<Identifier> modifiers = new ArrayList<>();
+            List<Identifier> triggers = new ArrayList<>();
+            boolean invalid = false;
+            for (String id : chord.modifiers) {
+                Identifier rl = Identifier.tryParse(id);
+                if (rl == null) {
+                    invalid = true;
+                    break;
+                }
+                modifiers.add(rl);
+            }
+            for (String id : chord.triggers) {
+                Identifier rl = Identifier.tryParse(id);
+                if (rl == null) {
+                    invalid = true;
+                    break;
+                }
+                triggers.add(rl);
+            }
+            if (invalid) {
+                ControlifyChords.LOGGER.warn("[Chords] #{} 的物理按键 ID 非法，跳过", i + 1);
+                continue;
+            }
+
+            for (Identifier id : modifiers) {
+                if (!WATCH_RAW.contains(id)) {
+                    WATCH_RAW.add(id);
+                }
+            }
+            for (Identifier id : triggers) {
+                if (!WATCH_RAW.contains(id)) {
+                    WATCH_RAW.add(id);
+                }
             }
 
             String modifierSetKey = new TreeSet<>(chord.modifiers).toString();
             boolean requiresOrder = chord.ordered
                     || modifierOrders.getOrDefault(modifierSetKey, Set.of()).size() > 1;
 
-            if (raw) {
-                List<Identifier> modifiers = new ArrayList<>();
-                List<Identifier> triggers = new ArrayList<>();
-                boolean invalid = false;
-                for (String id : chord.modifiers) {
-                    Identifier rl = Identifier.tryParse(id);
-                    if (rl == null) {
-                        invalid = true;
-                        break;
-                    }
-                    modifiers.add(rl);
-                }
-                for (String id : chord.triggers) {
-                    Identifier rl = Identifier.tryParse(id);
-                    if (rl == null) {
-                        invalid = true;
-                        break;
-                    }
-                    triggers.add(rl);
-                }
-                if (invalid) {
-                    ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 的物理按键 ID 非法，跳过", i + 1);
-                    continue;
-                }
-                for (Identifier id : modifiers) {
-                    if (!WATCH_RAW.contains(id)) {
-                        WATCH_RAW.add(id);
-                    }
-                }
-                for (Identifier id : triggers) {
-                    if (!WATCH_RAW.contains(id)) {
-                        WATCH_RAW.add(id);
-                    }
-                }
-                RUNTIMES.add(new Runtime(i, chord, modifiers, triggers, List.of(), List.of(), requiresOrder));
-            } else {
-                List<InputBindingSupplier> modifiers = new ArrayList<>();
-                List<InputBindingSupplier> triggers = new ArrayList<>();
-                boolean missing = false;
-                for (String id : chord.modifiers) {
-                    Optional<InputBindingSupplier> supplier = ChordBindings.supplier(id);
-                    if (supplier.isEmpty()) {
-                        ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 的修饰键 '{}' 非法，跳过", i + 1, id);
-                        missing = true;
-                        break;
-                    }
-                    modifiers.add(supplier.get());
-                    addWatch(supplier.get());
-                }
-                if (missing) {
-                    continue;
-                }
-                for (String id : chord.triggers) {
-                    Optional<InputBindingSupplier> supplier = ChordBindings.supplier(id);
-                    if (supplier.isEmpty()) {
-                        ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 的触发键 '{}' 非法，跳过", i + 1, id);
-                        missing = true;
-                        break;
-                    }
-                    triggers.add(supplier.get());
-                    addWatch(supplier.get());
-                }
-                if (missing) {
-                    continue;
-                }
-                RUNTIMES.add(new Runtime(i, chord, List.of(), List.of(), modifiers, triggers, requiresOrder));
-            }
+            RUNTIMES.add(new Runtime(i, chord, modifiers, triggers, requiresOrder));
         }
 
-        ControlifyChords.LOGGER.info("[Chords] 已装载 {} 个和弦（物理按键 {} 个，绑定 {} 个）",
-                RUNTIMES.size(), WATCH_RAW.size(), WATCH_BINDINGS.size());
-    }
-
-    private static void addWatch(InputBindingSupplier supplier) {
-        if (!WATCH_BINDINGS.contains(supplier)) {
-            WATCH_BINDINGS.add(supplier);
-        }
+        ControlifyChords.LOGGER.info("[Chords] 已装载 {} 条和弦，监听 {} 个按钮（按键池 {} 个）",
+                RUNTIMES.size(), WATCH_RAW.size(), config.keyPool.size());
     }
 
     private static final class Runtime {
@@ -280,58 +229,45 @@ public final class ChordManager {
         private final ChordDefinition definition;
         private final List<Identifier> rawModifiers;
         private final List<Identifier> rawTriggers;
-        private final List<InputBindingSupplier> bindModifiers;
-        private final List<InputBindingSupplier> bindTriggers;
-        /** 是否要求按列表顺序按下：同组键配置了多种顺序时为 true。 */
+        /** 同一组修饰键配置了多种顺序时为 true。 */
         private final boolean requiresOrder;
 
-        /** 每个运行时的触发键按下状态，避免多个和弦共享触发键时互相吞掉 justPressed。 */
-        private final Map<Identifier, Boolean> rawTriggerDown = new HashMap<>();
+        /** 触发键按下状态，避免多个和弦共享触发键时互相吞掉 justPressed。 */
+        private final Map<Identifier, Boolean> triggerDown = new HashMap<>();
 
-        private Identifier pendingRaw;
-        private InputBindingSupplier pendingBind;
+        private Identifier pendingTrigger;
         private int pendingSince = -1;
         private int cooldownUntil = -1;
 
         private Runtime(int index, ChordDefinition definition,
                         List<Identifier> rawModifiers, List<Identifier> rawTriggers,
-                        List<InputBindingSupplier> bindModifiers, List<InputBindingSupplier> bindTriggers,
                         boolean requiresOrder) {
             this.index = index;
             this.definition = definition;
             this.rawModifiers = rawModifiers;
             this.rawTriggers = rawTriggers;
-            this.bindModifiers = bindModifiers;
-            this.bindTriggers = bindTriggers;
             this.requiresOrder = requiresOrder;
         }
 
-        private boolean isRaw() {
-            return !rawTriggers.isEmpty();
-        }
-
         private void resetTransient() {
-            rawTriggerDown.clear();
+            triggerDown.clear();
             clearPending();
         }
 
         private void clearPending() {
-            pendingRaw = null;
-            pendingBind = null;
+            pendingTrigger = null;
             pendingSince = -1;
         }
 
-        private void tick(ControllerEntity controller, Set<Identifier> buttons) {
-            // 先更新触发键的按下状态：冷却期间也要更新，否则冷却结束会把“一直按着”误判成刚按下
-            Identifier justPressedRaw = null;
-            if (isRaw()) {
-                for (Identifier id : rawTriggers) {
-                    boolean down = buttons.contains(id);
-                    boolean wasDown = Boolean.TRUE.equals(rawTriggerDown.get(id));
-                    rawTriggerDown.put(id, down);
-                    if (down && !wasDown) {
-                        justPressedRaw = id;
-                    }
+        private void tick(Set<Identifier> buttons) {
+            // 先更新触发键状态：冷却期间也要更新，否则冷却结束会把“一直按着”误判成刚按下
+            Identifier justPressed = null;
+            for (Identifier id : rawTriggers) {
+                boolean down = buttons.contains(id);
+                boolean wasDown = Boolean.TRUE.equals(triggerDown.get(id));
+                triggerDown.put(id, down);
+                if (down && !wasDown) {
+                    justPressed = id;
                 }
             }
 
@@ -339,34 +275,12 @@ public final class ChordManager {
                 return;
             }
 
-            boolean armed = true;
+            boolean armed = buttons.containsAll(rawModifiers);
             int firstPressTick = Integer.MAX_VALUE;
             int lastPressTick = -1;
-            if (isRaw()) {
-                if (!buttons.containsAll(rawModifiers)) {
-                    armed = false;
-                } else {
-                    for (Identifier id : rawModifiers) {
-                        Integer pressedAt = RAW_PRESS_TICKS.get(id);
-                        if (pressedAt == null) {
-                            armed = false;
-                            break;
-                        }
-                        firstPressTick = Math.min(firstPressTick, pressedAt);
-                        lastPressTick = Math.max(lastPressTick, pressedAt);
-                    }
-                    if (armed && requiresOrder && !orderMatchesRaw()) {
-                        armed = false;
-                    }
-                }
-            } else {
-                for (InputBindingSupplier supplier : bindModifiers) {
-                    InputBinding binding = supplier.onOrNull(controller);
-                    if (binding == null || !binding.digitalNow()) {
-                        armed = false;
-                        break;
-                    }
-                    Integer pressedAt = BINDING_PRESS_TICKS.get(supplier.bindId().toString());
+            if (armed) {
+                for (Identifier id : rawModifiers) {
+                    Integer pressedAt = RAW_PRESS_TICKS.get(id);
                     if (pressedAt == null) {
                         armed = false;
                         break;
@@ -374,38 +288,26 @@ public final class ChordManager {
                     firstPressTick = Math.min(firstPressTick, pressedAt);
                     lastPressTick = Math.max(lastPressTick, pressedAt);
                 }
-                if (armed && requiresOrder && !orderMatchesBindings()) {
-                    armed = false;
-                }
+            }
+            if (armed && requiresOrder && !orderMatches()) {
+                armed = false;
             }
 
-            // 有序：第一个修饰键按住足够久；无序：最后一个按下的修饰键也按住足够久
-            int lastModifierPressTick = requiresOrder ? firstPressTick : lastPressTick;
-
-            // 物理按键：和弦成立或已有待触发键时，抑制这些按钮的普通绑定
-            if (isRaw() && (armed || pendingRaw != null)) {
+            if (armed || pendingTrigger != null) {
                 SUPPRESSED.addAll(rawModifiers);
-                if (pendingRaw != null) {
-                    SUPPRESSED.add(pendingRaw);
+                if (pendingTrigger != null) {
+                    SUPPRESSED.add(pendingTrigger);
                 } else {
                     SUPPRESSED.addAll(rawTriggers);
                 }
             }
 
-            boolean hasPending = isRaw() ? pendingRaw != null : pendingBind != null;
-            if (hasPending) {
+            if (pendingTrigger != null) {
                 if (!armed) {
                     clearPending();
                     return;
                 }
-                boolean released;
-                if (isRaw()) {
-                    released = !buttons.contains(pendingRaw);
-                } else {
-                    InputBinding binding = pendingBind.onOrNull(controller);
-                    released = binding != null && binding.justReleased();
-                }
-                if (released) {
+                if (!buttons.contains(pendingTrigger)) {
                     if (tickCounter - pendingSince <= definition.maxTriggerTapTicks) {
                         fire();
                     }
@@ -419,44 +321,23 @@ public final class ChordManager {
             if (!armed) {
                 return;
             }
-            if (lastModifierPressTick < 0
-                    || tickCounter - lastModifierPressTick < definition.minModifierHoldTicks) {
+            int holdReference = requiresOrder ? firstPressTick : lastPressTick;
+            if (holdReference < 0 || tickCounter - holdReference < definition.minModifierHoldTicks) {
                 return;
             }
-
-            if (isRaw()) {
-                if (justPressedRaw != null) {
-                    pendingRaw = justPressedRaw;
-                    pendingSince = tickCounter;
-                }
-            } else {
-                for (InputBindingSupplier supplier : bindTriggers) {
-                    InputBinding binding = supplier.onOrNull(controller);
-                    if (binding != null && binding.justPressed()) {
-                        pendingBind = supplier;
-                        pendingSince = tickCounter;
-                        break;
-                    }
-                }
+            if (justPressed != null) {
+                pendingTrigger = justPressed;
+                pendingSince = tickCounter;
             }
         }
 
         /** 有序模式下，实际按下顺序是否与配置列表一致。同一 tick 按下按列表顺序视为一致。 */
-        private boolean orderMatchesRaw() {
+        private boolean orderMatches() {
             List<Identifier> sorted = new ArrayList<>(rawModifiers);
             sorted.sort(Comparator
                     .comparingInt((Identifier id) -> RAW_PRESS_TICKS.getOrDefault(id, Integer.MAX_VALUE))
                     .thenComparingInt(rawModifiers::indexOf));
             return sorted.equals(rawModifiers);
-        }
-
-        private boolean orderMatchesBindings() {
-            List<InputBindingSupplier> sorted = new ArrayList<>(bindModifiers);
-            sorted.sort(Comparator
-                    .comparingInt((InputBindingSupplier s) ->
-                            BINDING_PRESS_TICKS.getOrDefault(s.bindId().toString(), Integer.MAX_VALUE))
-                    .thenComparingInt(bindModifiers::indexOf));
-            return sorted.equals(bindModifiers);
         }
 
         private void fire() {
@@ -493,8 +374,8 @@ public final class ChordManager {
                 }
             }
             if (ControlifyChords.LOGGER.isDebugEnabled()) {
-                ControlifyChords.LOGGER.debug("[Chords] 触发 #{} (raw={}) {} + {} -> {}",
-                        index + 1, isRaw(), definition.modifiers, definition.triggers, definition.actionValue);
+                ControlifyChords.LOGGER.debug("[Chords] 触发 #{} {} + {} -> {}",
+                        index + 1, definition.modifiers, definition.triggers, definition.actionValue);
             }
         }
     }

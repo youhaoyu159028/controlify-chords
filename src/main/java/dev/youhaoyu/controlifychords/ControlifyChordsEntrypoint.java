@@ -20,7 +20,7 @@ public final class ControlifyChordsEntrypoint implements ControlifyEntrypoint {
         ConfigManager.load();
         ChordBindings.registerAll(context);
         ChordManager.invalidate();
-        ControlifyChords.LOGGER.info("[Chords] 已在 Controlify pre-init 注册 {} 个和弦键", ChordBindings.KEY_SLOTS);
+        ControlifyChords.LOGGER.info("[Chords] 已在 Controlify pre-init 完成注册（仅“打开设置”绑定）");
     }
 
     @Override

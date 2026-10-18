@@ -12,7 +12,10 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Cloth Config 配置界面：一个通用页 + 每个和弦一页（两个列表：修饰键 / 触发键）。 */
+/**
+ * 配置界面：通用页（按键池 + 调试）+ 每条和弦一页 + 最后“新增和弦”一页。
+ * 和弦条数不设固定上限，保存时把填了内容的新增页追加进配置。
+ */
 public final class ChordsScreen {
 
     private ChordsScreen() {
@@ -21,10 +24,27 @@ public final class ChordsScreen {
     public static Screen create(Screen parent) {
         ChordsConfig config = ConfigManager.get();
 
+        List<Boolean> deleteFlags = new ArrayList<>();
+        for (int i = 0; i < config.chords.size(); i++) {
+            deleteFlags.add(false);
+        }
+        ChordDefinition extra = new ChordDefinition();
+
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(Component.translatable("controlifychords.config.title"))
                 .setSavingRunnable(() -> {
+                    for (int i = config.chords.size() - 1; i >= 0; i--) {
+                        if (i < deleteFlags.size() && Boolean.TRUE.equals(deleteFlags.get(i))) {
+                            config.chords.remove(i);
+                        }
+                    }
+                    if (!extra.modifiers.isEmpty() || !extra.triggers.isEmpty()) {
+                        config.chords.add(extra);
+                    }
+                    if (config.chords.isEmpty()) {
+                        config.chords.add(new ChordDefinition());
+                    }
                     ConfigManager.save();
                     ChordManager.invalidate();
                 });
@@ -32,41 +52,88 @@ public final class ChordsScreen {
         ConfigEntryBuilder entries = builder.entryBuilder();
 
         ConfigCategory general = builder.getOrCreateCategory(Component.translatable("controlifychords.config.general"));
+
+        general.addEntry(entries
+                .startStrList(Component.translatable("controlifychords.config.key_pool"),
+                        new ArrayList<>(config.keyPool))
+                .setDefaultValue(new ArrayList<>())
+                .setExpanded(true)
+                .setTooltip(Component.translatable("controlifychords.config.key_pool.tip"))
+                .setSaveConsumer(list -> config.keyPool = clean(list))
+                .build());
+
         general.addEntry(entries
                 .startBooleanToggle(Component.translatable("controlifychords.config.debug"), config.debug)
                 .setDefaultValue(false)
                 .setTooltip(Component.translatable("controlifychords.config.debug.tip"))
                 .setSaveConsumer(value -> config.debug = value)
                 .build());
+
         general.addEntry(entries
                 .startTextDescription(Component.translatable("controlifychords.config.help"))
                 .build());
 
+        general.addEntry(entries
+                .startTextDescription(Component.translatable("controlifychords.config.available",
+                        ChordBindings.idHint()))
+                .build());
+
         for (int i = 0; i < config.chords.size(); i++) {
-            buildChord(builder, entries, config.chords.get(i), i);
+            ChordDefinition chord = config.chords.get(i);
+            final int slot = i;
+            ConfigCategory category = builder.getOrCreateCategory(
+                    Component.translatable("controlifychords.config.chord", i + 1));
+
+            if (!chord.name.isBlank()) {
+                category.addEntry(entries
+                        .startTextDescription(Component.literal(chord.name))
+                        .build());
+            }
+
+            category.addEntry(entries
+                    .startBooleanToggle(Component.translatable("controlifychords.config.enabled"), chord.enabled)
+                    .setDefaultValue(false)
+                    .setSaveConsumer(value -> chord.enabled = value)
+                    .build());
+
+            category.addEntry(entries
+                    .startStrField(Component.translatable("controlifychords.config.name"), safe(chord.name))
+                    .setDefaultValue("")
+                    .setSaveConsumer(value -> chord.name = value == null ? "" : value.trim())
+                    .build());
+
+            addChordEntries(category, entries, chord);
+
+            category.addEntry(entries
+                    .startBooleanToggle(Component.translatable("controlifychords.config.delete"), false)
+                    .setDefaultValue(false)
+                    .setTooltip(Component.translatable("controlifychords.config.delete.tip"))
+                    .setSaveConsumer(value -> deleteFlags.set(slot, value))
+                    .build());
         }
+
+        ConfigCategory addPage = builder.getOrCreateCategory(
+                Component.translatable("controlifychords.config.chord.new"));
+        addPage.addEntry(entries
+                .startTextDescription(Component.translatable("controlifychords.config.chord.new.tip"))
+                .build());
+
+        addPage.addEntry(entries
+                .startBooleanToggle(Component.translatable("controlifychords.config.enabled"), extra.enabled)
+                .setDefaultValue(false)
+                .setSaveConsumer(value -> extra.enabled = value)
+                .build());
+        addPage.addEntry(entries
+                .startStrField(Component.translatable("controlifychords.config.name"), "")
+                .setDefaultValue("")
+                .setSaveConsumer(value -> extra.name = value == null ? "" : value.trim())
+                .build());
+        addChordEntries(addPage, entries, extra);
 
         return builder.build();
     }
 
-    private static void buildChord(ConfigBuilder builder, ConfigEntryBuilder entries,
-                                   ChordDefinition chord, int index) {
-        ConfigCategory category = builder.getOrCreateCategory(
-                Component.translatable("controlifychords.config.chord", index + 1));
-
-        category.addEntry(entries
-                .startBooleanToggle(Component.translatable("controlifychords.config.enabled"), chord.enabled)
-                .setDefaultValue(false)
-                .setSaveConsumer(value -> chord.enabled = value)
-                .build());
-
-        category.addEntry(entries
-                .startStrField(Component.translatable("controlifychords.config.name"), safe(chord.name))
-                .setDefaultValue("")
-                .setSaveConsumer(value -> chord.name = value == null ? "" : value.trim())
-                .build());
-
-        // 修饰键：一个列表，默认顺序无所谓，全部按住即可
+    private static void addChordEntries(ConfigCategory category, ConfigEntryBuilder entries, ChordDefinition chord) {
         category.addEntry(entries
                 .startStrList(Component.translatable("controlifychords.config.modifiers"),
                         new ArrayList<>(chord.modifiers))
@@ -76,7 +143,6 @@ public final class ChordsScreen {
                 .setSaveConsumer(list -> chord.modifiers = clean(list))
                 .build());
 
-        // 触发键：一个列表，任意一个轻按都会触发同一动作
         category.addEntry(entries
                 .startStrList(Component.translatable("controlifychords.config.triggers"),
                         new ArrayList<>(chord.triggers))
@@ -120,11 +186,6 @@ public final class ChordsScreen {
                         chord.cooldownTicks, 0, 200)
                 .setDefaultValue(10)
                 .setSaveConsumer(value -> chord.cooldownTicks = value)
-                .build());
-
-        category.addEntry(entries
-                .startTextDescription(Component.translatable("controlifychords.config.available",
-                        ChordBindings.idHint()))
                 .build());
     }
 

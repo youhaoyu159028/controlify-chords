@@ -1,11 +1,11 @@
-# 新手设置教程（0.4.3）
+# 新手设置教程（0.5.0）
 
 > 这份教程假设你**完全没配过**，从「装了什么」一路写到「按下去有反应」。
-> 全程不需要写代码；配置界面里填几个 ID 就行。
+> 0.5.0 没有固定槽位：和弦条数不限，按钮从「通用按键池」里取。
 
 ---
 
-## 0. 先花 30 秒看懂它怎么工作
+## 0. 先花 30 秒看懂
 
 一条和弦 = **两个列表**：
 
@@ -16,163 +16,159 @@
 按住 十字上 + LB（先后随便）→ 轻按 A（或 B）→ 执行同一个动作
 ```
 
-- **修饰键列表**：全部按住就成立。顺序默认随便；如果同一组键你配置了两种顺序（见 3.2），系统会自动按顺序区分。
-- **触发键列表**：里面**任意一个**轻按都会触发同一动作。放两个键，等于两个键都能触发。
-- 中途松开任何一个修饰键 = 取消，不会触发。
-- 同一个键可以在 A 和弦里当修饰键、在 B 和弦里当触发键。
+- **修饰键列表**：全部按住就成立，顺序默认随便。
+- **触发键列表**：里面任意一个轻按都会触发同一动作。
+- 中途松开任何一个修饰键 = 取消。
+- 和弦条数**没有上限**，想配 10 条、20 条都行。
 
 ---
 
-## 1. 确认 mods 里到底该有哪些文件
+## 1. 确认 mods 里该有哪些文件
 
-进游戏前，先看你的 `mods` 文件夹。Zalith 的隔离版本路径是：
+路径（Zalith 隔离版本）：
 
 ```
 /storage/emulated/0/mc/.mc/versions/26.2/mods/
 ```
 
-里面必须**同时**有这 5 个（缺一个都会在加载界面直接失败）：
+必须**同时**有这 5 个：
 
-| 文件（名字大致长这样） | 作用 | 缺了会怎样 |
+| 文件 | 作用 | 缺了会怎样 |
 |---|---|---|
-| `fabric-api-0.161.0+26.2.jar` | Fabric 基础 API | 模组加载失败 |
+| `fabric-api-0.161.0+26.2.jar` | Fabric 基础 API | 加载失败 |
 | `controlify-3.5.3+mc26.2-universal.jar` | 手柄支持本体 | 报 `depends controlify` |
 | `cloth-config-26.2.155-fabric.jar` | 配置界面库 | 报 `depends cloth-config` |
-| `yet_another_config_lib_v3-3.9.7+26.2-fabric.jar` | Controlify 依赖的配置库 | Controlify 自己起不来 |
-| `controlify-chords-0.4.3.jar` | 本模组 | 没有和弦功能 |
+| `yet_another_config_lib_v3-3.9.7+26.2-fabric.jar` | Controlify 的依赖 | Controlify 起不来 |
+| `controlify-chords-0.5.0.jar` | 本模组 | 没有和弦功能 |
 
-可选：`modmenu-20.0.3.jar`（想要主界面里的配置齿轮就装，不装也能用 F9）。
+可选：`modmenu-20.0.3.jar`（有它主界面才有配置齿轮，不装也能用 F9/手柄）。
 
-> 版本号不用一模一样，但主版本要对得上：MC 26.2、Controlify 3.5.3+、Cloth 26.2+。
+> 只能放一个版本的 `controlify-chords`，旧的要删掉。
 
-**怎么确认装对了**：启动游戏 → 主界面 → `Mods`（Mod Menu）→ 列表里能看到 `Controlify Chords`，版本 `0.4.0`。
+**确认装对**：主界面 Mod Menu 里看到 `Controlify Chords 0.5.0`。
 
 ---
 
 ## 2. 打开配置界面
 
-三条路，任选一条。**不需要 Mod Menu 也能用**。
-
-### 路线 A：游戏内按 F9（有键盘时最省事）
-
-进世界后按 `F9`，直接弹出设置界面。
-
-按键可以在 `选项 → 控制 → 按键绑定 → 杂项` 里改成别的（条目名“打开和弦设置”）。
-
-> 注意：`F9` 只在**没有其他界面打开**时生效；在主菜单按没用，必须进世界。
-
-### 路线 A2：用手柄打开（没有键盘就选这个）
-
-1. 进游戏 → Controlify 设置 → 找到 **组合键** 分类；
-2. 把某个不常用的按钮（比如 `Back` / `触摸板` / `L3`）绑到 **「打开和弦设置（手柄）」**；
-3. 之后按这个按钮，直接弹出配置界面。
-
-> 这个绑定只负责“开设置”，不影响别的功能。
-
-### 路线 B：有 Mod Menu
+### 路线 A：手柄（推荐，不用键盘）
 
 ```
-主界面 → Mods → 找到 Controlify Chords → 点它右边的齿轮/配置按钮
+Controlify 设置 → 组合键 分类 → 把 Back / 触摸板 / L3 绑到「打开和弦设置（手柄）」
 ```
 
-> “模组目录 / Mod Directory”不是 Mod Menu，它只是列出模组文件，不会显示配置按钮。需要真正的 **Mod Menu** 才有齿轮。
+进世界后按它，弹出配置界面。
 
-打开后你会看到：`通用` 和 `和弦 1` … `和弦 8` 共 9 页。
+### 路线 B：键盘
 
-### 路线 C：直接改文件
+进世界后按 `F9`（可在 `选项 → 控制 → 按键绑定 → 杂项` 改成别的，条目名“打开和弦设置”）。
+
+> 主菜单按没用，必须进世界。
+
+### 路线 C：Mod Menu
+
+主界面 → Mods → Controlify Chords → 齿轮。
+
+> “模组目录 / Mod Directory”不是 Mod Menu，不会有齿轮。
+
+### 路线 D：直接改文件
 
 ```
 /storage/emulated/0/mc/.mc/versions/26.2/config/controlify-chords.json
 ```
 
-用任意文本编辑器打开（MT 管理器、ES 文件浏览器都行）。**改完必须重启游戏**，游戏不会自动读取外部修改。
+改完必须重启游戏。
 
 ---
 
-## 3. 手把手配第一条和弦
+## 3. 手把手配第一条
 
-例子：**按住十字键上，再轻按 A，触发“交换副手”**。
+### 3.1 先在「通用」页建按键池
 
-### 3.1 在「和弦 1」页填这些
+打开「通用」页，第一项是 **通用按键池**。点“添加”，把你要用的按钮逐个加进去，例如：
 
-| 界面上的文字 | 填什么 | 说明 |
-|---|---|---|
-| 启用 | **打开** | 不打开这一条完全不生效 |
-| 显示名称 | `十字上 + A 交换副手` | 随便写，只用于你自己看 |
-| 修饰键列表 | 加一行：`controlify:button/dpad_up` | 需要一直按住的键 |
-| 触发键列表 | 加一行：`controlify:button/south` | 轻按一下就行的键（A 键） |
-| 动作类型 | `KEY_MAPPING` | 意思是“模拟按一个原版按键” |
-| 动作参数 | `key.swapOffhand` | 交换副手的按键名 |
-| 修饰键最短按住（tick） | `3` | 默认值，不用改 |
-| 触发键最长轻按（tick） | `8` | 默认值，不用改 |
-| 冷却（tick） | `10` | 防止手抖连发 |
+```
+controlify:button/dpad_up
+controlify:button/dpad_down
+controlify:button/south
+controlify:button/east
+controlify:button/left_shoulder
+controlify:button/right_shoulder
+```
 
-**两个列表怎么操作**：列表默认展开，最后一行是“添加”按钮。点一下会多出一个空输入框，点进去输入 ID；每行右侧有删除按钮，填错了删掉重来。
+规则：**和弦只能用池里的按钮**。池为空表示不限制，但建议填上，填错 ID 时日志会直接告诉你“不在池里”。
 
-想加多个键就继续点“添加”：比如修饰键列表放 `controlify:button/dpad_up` 和 `controlify:button/left_shoulder`，触发键列表放 `controlify:button/south` 和 `controlify:button/east`。
+### 3.2 再填「和弦 1」页
 
-填完点右下角 **Save & Quit**（保存并退出）。
+| 界面文字 | 填什么 |
+|---|---|
+| 启用 | 打开 |
+| 显示名称 | `十字上 + A 交换副手` |
+| 修饰键列表 | 添加一行：`controlify:button/dpad_up` |
+| 触发键列表 | 添加一行：`controlify:button/south` |
+| 动作类型 | `KEY_MAPPING` |
+| 动作参数 | `key.swapOffhand` |
+| 修饰键最短按住 | 3（默认） |
+| 触发键最长轻按 | 8（默认） |
+| 冷却 | 10（默认） |
 
-> Cloth Config 26.2 没有自带中文语言文件，底部按钮显示英文：`Save & Quit` = 保存并退出，`Discard Changes` = 放弃修改。**点错会丢配置**。
+两个列表的操作：列表默认展开，最后一行是“添加”按钮；点一下多一个空输入框，右侧有删除按钮。
 
-> 在配置界面保存是**立即生效**的；只有手动改 `config/controlify-chords.json` 才需要重启游戏。
+填完点右下角 **Save & Quit**。Cloth Config 26.2 没有中文语言文件，按钮是英文：`Save & Quit` = 保存退出，`Discard Changes` = 放弃修改。
 
-> 列表里是**文本框**，不是“按一下手柄自动录键”，ID 要手动输入。
+保存**立即生效**，不用重启。
 
-### 3.2 想让“LB+RB”和“RB+LB”是两个操作
+### 3.3 新增更多和弦
 
-不用任何开关，直接配两条，系统会自动区分：
+最后一页永远叫 **「新增和弦」**。在里面填好修饰键、触发键、动作，保存后它就变成一条真正的和弦，下次打开会多出一个新的「新增和弦」页。
 
-| 和弦 | 修饰键列表 | 触发键列表 | 实际按法 | 动作 |
+不填内容就保存 = 什么也不加，不会产生空条目。
+
+想删掉某条：进那一条，把最下面的 **「删除这条和弦」** 打开，保存即可。
+
+### 3.4 让“LB+RB”和“RB+LB”是两个操作
+
+不用开关，直接配两条：
+
+| 和弦 | 修饰键列表 | 触发键列表 | 按法 | 动作 |
 |---|---|---|---|---|
-| 和弦 1 | `controlify:button/left_shoulder`、`controlify:button/right_shoulder` | `controlify:button/south` | LB → RB → 轻按 A | 动作 1 |
-| 和弦 2 | `controlify:button/right_shoulder`、`controlify:button/left_shoulder` | `controlify:button/east` | RB → LB → 轻按 B | 动作 2 |
+| 1 | `left_shoulder`、`right_shoulder` | `south` | LB → RB → 轻按 A | 动作 1 |
+| 2 | `right_shoulder`、`left_shoulder` | `east` | RB → LB → 轻按 B | 动作 2 |
 
-要点：
+- 同一组键出现两种不同顺序 → 自动按顺序区分；
+- 只有一条时 → `LB→RB` 和 `RB→LB` 都算它，顺序随便。
 
-- 两条的修饰键**列表顺序不同**，这就是“两种操作”的来源；
-- 只要同一组键出现了两种不同顺序，这两条就自动变成“按顺序区分”；
-- 如果只配和弦 1 一条，那么 `LB→RB→A` 和 `RB→LB→A` 都算和弦 1，顺序随便。
+> 同一 tick 按下的两个键无法分辨先后，会按列表顺序视为正确；错开一帧即可。
 
-> 同一 tick 内同时按下的两个键无法分辨先后，会按列表顺序视为正确。错开一帧即可。
-
-### 3.3 为什么不用去 Controlify 里绑键
+### 3.5 为什么不用去 Controlify 绑键
 
 因为 `controlify:button/dpad_up` 是**手柄物理按键**，不是 Controlify 的“绑定”。
 
-- 十字键上在 Controlify 里的原功能**原封不动**；
-- 模组直接读手柄的原始按键状态，所以它既能当原功能用，也能当和弦的“按住键”；
-- 和弦成立期间，模组会临时屏蔽这些按钮的普通动作，避免按 A 时跳跃也一起触发。
+- 十字上的原功能原封不动；
+- 模组直接读手柄原始按键状态，所以它既能当原功能，也能当“按住键”；
+- 和弦成立期间会临时屏蔽这些按钮的普通动作，避免按 A 时跳跃也一起触发。
 
-### 3.4 实际按法
+### 3.6 实际按法
 
 ```
-按住十字上不放（约 0.15 秒）→ 轻按一下 A（按下马上松开）→ 副手物品交换
+按住十字上不放（约 0.15 秒）→ 轻按一下 A（马上松开）→ 交换副手
 ```
 
-注意是**轻按**：按下后要在 8 tick（约 0.4 秒）内松开。按住 A 不放不会触发。
+按住 A 不放不算触发。
 
 ---
 
-## 4. 动作类型怎么选
+## 4. 动作类型
 
-`动作类型` 有三档，90% 的情况用第一档。
-
-| 动作类型 | 用途 | 动作参数写什么 |
+| 类型 | 用途 | 动作参数 |
 |---|---|---|
-| `KEY_MAPPING` | 模拟按一个普通按键（小地图、背包、丢弃、交换副手…） | 按键名，如 `key.swapOffhand` |
-| `COMMAND` | 执行一条命令 | 如 `/spawn`，带不带 `/` 都行 |
-| `CUSTOM` | 其他模组注册的动作 | 动作 ID，如 `mymod:drink_potion` |
+| `KEY_MAPPING` | 模拟按普通按键（小地图、背包、丢弃…） | `key.swapOffhand` |
+| `COMMAND` | 执行命令 | `/spawn` |
+| `CUSTOM` | 其他模组注册的动作 | `mymod:drink_potion` |
 
-### 怎么找 `KEY_MAPPING` 要填的按键名
+### 找按键名
 
-**方法一（最准）**：打开
-
-```
-/storage/emulated/0/mc/.mc/versions/26.2/options.txt
-```
-
-搜索 `key_`，会看到这种行：
+打开 `.../versions/26.2/options.txt`，搜 `key_`：
 
 ```
 key_key.jump:key.keyboard.space
@@ -180,36 +176,21 @@ key_key.swapOffhand:key.keyboard.f
 key_key.xaero.minimap:key.keyboard.m
 ```
 
-规则：**去掉行首的 `key_`，取冒号前的那一段。**
+**去掉行首 `key_`，取冒号前那段**：
 
 - `key_key.jump` → `key.jump`
 - `key_key.swapOffhand` → `key.swapOffhand`
 - `key_key.xaero.minimap` → `key.xaero.minimap`
 
-**方法二**：游戏里 `选项 → 控制 → 按键绑定`，找到功能名；大部分原版功能的按键名就是 `key.` + 功能名。
+常用：`key.jump`、`key.sneak`、`key.sprint`、`key.attack`、`key.use`、`key.inventory`、`key.drop`、`key.swapOffhand`、`key.chat`、`key.togglePerspective`。
 
-常用原版按键名：
-
-| 功能 | 按键名 |
-|---|---|
-| 跳跃 | `key.jump` |
-| 潜行 | `key.sneak` |
-| 疾跑 | `key.sprint` |
-| 攻击 | `key.attack` |
-| 使用 / 放置 | `key.use` |
-| 打开背包 | `key.inventory` |
-| 丢弃物品 | `key.drop` |
-| 交换副手 | `key.swapOffhand` |
-| 打开聊天 | `key.chat` |
-| 切换视角 | `key.togglePerspective` |
-
-> 小地图（Xaero / JourneyMap）的按键名**各版本可能不同**，一定要用上面的方法自己去 `options.txt` 里确认，别照抄。
+> 小地图的按键名各版本不同，一定要自己确认，别照抄 `key.xaero.minimap`。
 
 ---
 
-## 5. 三条可以直接抄的配置
+## 5. 三条可直接抄的配置
 
-改文件的话，把 `chords` 数组里的某一条换成下面任意一个。改完重启游戏。
+把 `chords` 数组里的某一条换成下面任意一个（同时确保这些按钮在 `keyPool` 里）。改完重启。
 
 ### 5.1 十字上 + A → 交换副手
 
@@ -227,12 +208,12 @@ key_key.xaero.minimap:key.keyboard.m
 }
 ```
 
-### 5.2 LB + RB 按住，A 或 B 都能打开小地图
+### 5.2 LB + RB 按住，A 或 B 都能开小地图
 
 ```json
 {
   "enabled": true,
-  "name": "LB + RB → A/B 打开小地图",
+  "name": "LB + RB → A/B 小地图",
   "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
   "triggers": ["controlify:button/south", "controlify:button/east"],
   "actionType": "key_mapping",
@@ -243,129 +224,117 @@ key_key.xaero.minimap:key.keyboard.m
 }
 ```
 
-> `key.xaero.minimap` 必须换成你自己 `options.txt` 里的真实名字。
-
-### 5.3 十字下按住的组合 → 执行命令
+### 5.3 有序：LB→RB→A 与 RB→LB→B 两条
 
 ```json
-{
-  "enabled": true,
-  "name": "十字下 + 十字右 回城",
-  "modifiers": ["controlify:button/dpad_down"],
-  "triggers": ["controlify:button/dpad_right"],
-  "actionType": "command",
-  "actionValue": "/spawn",
-  "minModifierHoldTicks": 5,
-  "maxTriggerTapTicks": 8,
-  "cooldownTicks": 20
-}
+[
+  {
+    "enabled": true,
+    "name": "LB → RB → A",
+    "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
+    "triggers": ["controlify:button/south"],
+    "actionType": "key_mapping",
+    "actionValue": "key.swapOffhand",
+    "minModifierHoldTicks": 3,
+    "maxTriggerTapTicks": 8,
+    "cooldownTicks": 10
+  },
+  {
+    "enabled": true,
+    "name": "RB → LB → B",
+    "modifiers": ["controlify:button/right_shoulder", "controlify:button/left_shoulder"],
+    "triggers": ["controlify:button/east"],
+    "actionType": "key_mapping",
+    "actionValue": "key.drop",
+    "minModifierHoldTicks": 3,
+    "maxTriggerTapTicks": 8,
+    "cooldownTicks": 10
+  }
+]
 ```
 
 ---
 
-## 6. 物理按键 ID 速查表
+## 6. 物理按键 ID 速查
 
-Xbox 布局为准，其他布局（PS/Switch）位置对应、ID 不变。
-
-| 手柄上的键 | 填这个 |
+| 手柄上的键 | ID |
 |---|---|
 | 十字上 / 下 / 左 / 右 | `controlify:button/dpad_up` / `dpad_down` / `dpad_left` / `dpad_right` |
 | A（下）/ B（右）/ X（左）/ Y（上） | `controlify:button/south` / `east` / `west` / `north` |
 | LB / RB | `controlify:button/left_shoulder` / `right_shoulder` |
-| L3（左摇杆按下）/ R3（右摇杆按下） | `controlify:button/left_stick` / `right_stick` |
+| L3 / R3 | `controlify:button/left_stick` / `right_stick` |
 | Start / Back | `controlify:button/start` / `back` |
-| Guide（西瓜键/PS 键） | `controlify:button/guide` |
+| Guide | `controlify:button/guide` |
 
-暂时**不支持**摇杆方向和扳机行程（axis），只支持“按下/没按下”的普通按钮。
-
----
-
-## 7. 两种模式，别混用
-
-| | 物理按键模式（推荐） | 绑定 ID 模式（老） |
-|---|---|---|
-| 写法 | `controlify:button/dpad_up` | `controlifychords:key_1` |
-| 要去 Controlify 绑键吗 | **不用** | 要，先把按钮绑到“和弦键 1” |
-| 按钮原功能 | **保留** | 被占用，原功能没了 |
-| 防双触发 | 有（自动屏蔽） | 没有 |
-
-**规则**：同一条和弦里，要么全用物理按键，要么全用绑定 ID；混着写这条会被跳过（日志里有提示）。
-
-老模式写法：
-
-```json
-"modifiers": ["controlifychords:key_1"],
-"triggers": ["controlifychords:key_2"]
-```
-
-注意两个字段都是数组。
+全小写；`_` 不能写成 `-`。
 
 ---
 
-## 8. 配完不生效？按这个顺序查
+## 7. 配完不生效？按这个顺序查
 
-### 第一步：看日志有没有装进去
-
-打开
+### 第一步：看日志
 
 ```
 /storage/emulated/0/mc/.mc/versions/26.2/logs/latest.log
 ```
 
-搜索 `[Chords]`。正常会有一行：
+搜 `[Chords]`。正常：
 
 ```
-[Chords] 已装载 1 个和弦（物理按键 2 个，绑定 0 个）
+[Chords] 已装载 3 条和弦，监听 6 个按钮（按键池 12 个）
 ```
 
-- 显示 `0 个和弦`：说明你的和弦没启用，或被判定为非法。
-- `修饰键或触发键列表为空`：两个列表至少各填一个。
-- `混用了物理按键与绑定 ID`：见第 7 节。
-- `同一个键同时出现在修饰键和触发键里`：同一个键不能在同一和弦里兼任两种角色。
-- `与前面的和弦完全相同`：两条配置一模一样。
+显示 `0 条和弦` 时，紧跟着的 warn 会说明原因：
+
+| 日志 | 含义 | 怎么修 |
+|---|---|---|
+| `修饰键或触发键列表为空` | 两个列表至少各填一个 | 补上 |
+| `列表里有重复项` | 同一个键写了两次 | 删掉重复 |
+| `同一个键同时出现在两个列表里` | 一个键不能在同一条里兼任 | 换一个 |
+| `含有非物理按键 ID` | 用了 `controlifychords:key_N` 或 `controlify:jump` | 改成 `controlify:button/xxx` |
+| `不在“按键池”里` | 池里没有这个按钮 | 通用页加进去 |
+| `与前面的和弦完全相同` | 两条内容一样 | 删掉一条 |
 
 ### 第二步：对照症状
 
-| 症状 | 最可能的原因 | 怎么修 |
+| 症状 | 原因 | 修法 |
 |---|---|---|
-| 按了完全没反应 | 和弦没勾“启用” | 打开启用并点保存（立即生效） |
-| 按了没反应 | 修饰键没按够 3 tick | 按住稍久一点，或把“最短按住”改成 0 |
-| 按了没反应 | 触发键按太久 | 轻按，0.4 秒内松开；或把“最长轻按”改成 15 |
-| 按了没反应 | 先按了触发键才按修饰键 | 触发键必须在修饰键全部按住之后按 |
-| 按了没反应 | 列表里填的 ID 拼错 | 对照第 6 节，注意全小写、`_` 不能写成 `-` |
-| 触发了两次 | 有两条内容相同的和弦 | 删掉重复的那条 |
-| 按下修饰键时原动作先触发一次 | 已知限制：起手那一帧还没判定成和弦 | 一次性动作（开地图）会明显；持续动作（视角）基本无感 |
-| 配置界面打不开 | 没进世界 / 按了 F9 但界面已打开 | 进世界、关掉其他界面再按；或装 Mod Menu |
-| 改了 JSON 没变化 | 游戏不会热重载 | 重启游戏 |
-| 游戏崩在加载界面 | 缺依赖 | 回第 1 节对一遍 5 个 jar |
-| 手柄没反应，键鼠正常 | Controlify 没识别到手柄 | 先去 Controlify 设置里确认手柄已连接、能操作菜单 |
+| 完全没反应 | 没勾“启用” | 打开启用并保存 |
+| 没反应 | 修饰键没按够 3 tick | 按久一点，或把“最短按住”改 0 |
+| 没反应 | 触发键按太久 | 轻按，0.4 秒内松开 |
+| 没反应 | 先按了触发键 | 触发键必须在修饰键之后按 |
+| 没反应 | ID 拼错 | 对照第 6 节 |
+| 触发了两次 | 有两条重复和弦 | 删掉一条 |
+| 按下修饰键时原动作先触发一次 | 起手那一帧还没判定成和弦（已知限制） | 一次性动作会明显，持续动作基本无感 |
+| 改 JSON 没变化 | 不会热重载 | 重启游戏 |
+| 界面打不开 | 没进世界 / 已开着别的界面 | 进世界、关掉界面再按 |
+| 崩在加载界面 | 缺依赖 | 回第 1 节 |
 
 ### 第三步：开调试日志
 
-配置界面 → `通用` → `调试日志` 打开 → 保存。
-
-之后每次和弦触发都会写进 `latest.log`，能直接看出卡在哪一步。
+通用页 → `调试日志` 打开 → 保存。之后每次触发都会写进日志。
 
 ---
 
-## 9. 从 0.3.x 升级
+## 8. 从 0.4.x 升级
 
-- 直接换 jar。旧配置里的单个 `trigger` 会自动并入 `triggers` 列表，不用手改。
-- 顺序不用你设置：如果你保留了 `LB→RB` 和 `RB→LB` 两条，它们会自动按顺序区分；只有一条时顺序随便。
-- 唯一要删的是**完全重复**的配置（列表内容和顺序都一样），后一条会被跳过，日志会提示。
-
----
-
-## 10. 想删掉/回退
-
-- 临时关掉某条：配置里取消“启用”，不用删文件。
-- 全部关掉：把 `controlify-chords-0.4.3.jar` 移出 `mods`。
-- 回退到 0.3.x：换回旧 jar，配置里的 `triggers` 数组旧版不认，需要改回单个 `trigger` 字符串。
+- **`controlifychords:key_1..8` 已经移除**，所有成员改成 `controlify:button/xxx`（第 6 节）。
+- 用到旧写法 `controlify:jump`、`controlifychords:key_N` 的和弦会被跳过，日志提示“含有非物理按键 ID”。
+- 和弦条数不再限制 8 条；旧的 8 条会原样保留，可以继续加。
+- 旧配置的 `trigger` 字段仍会自动并入 `triggers`。
 
 ---
 
-## 11. 三句话总结
+## 9. 想删掉/回退
 
-1. 一条和弦就是**两个列表**：修饰键列表（一直按住）+ 触发键列表（任意一个轻按）。同一组键配了两种顺序时，自动按顺序区分。
-2. 物理按键模式直接写 `controlify:button/xxx`，**不用去 Controlify 绑任何东西**，原功能还在。
-3. 不生效先看 `latest.log` 里的 `[Chords]` 行，它会明确告诉你哪条被跳过、为什么。
+- 关掉某条：取消“启用”。
+- 删掉某条：打开“删除这条和弦”并保存。
+- 全部关掉：把 `controlify-chords-0.5.0.jar` 移出 `mods`。
+
+---
+
+## 10. 三句话总结
+
+1. 先往「通用按键池」里加按钮，再到各和弦页引用；和弦条数不限。
+2. 修饰键全部按住 + 触发键任意一个轻按；同一组键配了两种顺序时自动按顺序区分。
+3. 不生效先看 `latest.log` 的 `[Chords]` 行，它会明确说哪条被跳过、为什么。
