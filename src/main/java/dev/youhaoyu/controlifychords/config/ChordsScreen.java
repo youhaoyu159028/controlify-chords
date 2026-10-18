@@ -6,11 +6,13 @@ import dev.youhaoyu.controlifychords.chord.ChordManager;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 配置界面：通用页（按键池 + 调试）+ 每条和弦一页 + 最后“新增和弦”一页。
@@ -159,6 +161,20 @@ public final class ChordsScreen {
                 .setSaveConsumer(list -> chord.triggers = clean(list))
                 .build());
 
+        category.addEntry(new CaptureEntry(
+                Component.translatable("controlifychords.capture.modifier"),
+                Component.translatable("controlifychords.capture.button"),
+                Component.translatable("controlifychords.capture.prompt.modifier"),
+                id -> addCaptured(chord.modifiers, id),
+                () -> Optional.empty()));
+
+        category.addEntry(new CaptureEntry(
+                Component.translatable("controlifychords.capture.trigger"),
+                Component.translatable("controlifychords.capture.button"),
+                Component.translatable("controlifychords.capture.prompt.trigger"),
+                id -> addCaptured(chord.triggers, id),
+                () -> Optional.empty()));
+
         category.addEntry(entries
                 .startEnumSelector(Component.translatable("controlifychords.config.action_type"),
                         ChordDefinition.ActionType.class,
@@ -194,6 +210,20 @@ public final class ChordsScreen {
                 .setDefaultValue(10)
                 .setSaveConsumer(value -> chord.cooldownTicks = value)
                 .build());
+    }
+
+    /** 捕获到的按钮直接写进和弦列表；池里没有就追加到池尾，避免被“不在池里”校验拦掉。 */
+    private static void addCaptured(List<String> target, String id) {
+        if (!target.contains(id)) {
+            target.add(id);
+        }
+        ChordsConfig config = ConfigManager.get();
+        if (!config.keyPool.contains(id)) {
+            config.keyPool.add(id);
+        }
+        ConfigManager.save();
+        ChordManager.invalidate();
+        Minecraft.getInstance().setScreenAndShow(ChordsScreen.create(null));
     }
 
     /** 把按键池渲染成 “1 = xxx” 的多行说明，用户照着填编号即可。 */

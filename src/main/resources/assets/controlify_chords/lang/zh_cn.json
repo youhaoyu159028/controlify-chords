@@ -28,5 +28,12 @@
   "controlifychords.config.delete.tip": "打开后点保存，这条和弦会被删除。",
   "controlifychords.config.available": "可用按钮 ID：%s",
   "key.controlifychords.open_config": "打开和弦设置",
-  "controlifychords.config.key_pool.index": "按键池编号（写 #编号 即可，例如 #9）："
+  "controlifychords.config.key_pool.index": "按键池编号（写 #编号 即可，例如 #9）：",
+  "controlifychords.capture.title": "捕获按键",
+  "controlifychords.capture.button": "按手柄键捕获",
+  "controlifychords.capture.prompt.modifier": "请按下一个要作为「修饰键」的按钮",
+  "controlifychords.capture.prompt.trigger": "请按下一个要作为「触发键」的按钮",
+  "controlifychords.capture.hint": "按下后自动返回并写入列表；Esc 取消",
+  "controlifychords.capture.modifier": "捕获修饰键",
+  "controlifychords.capture.trigger": "捕获触发键"
 }

@@ -1,4 +1,4 @@
-# 新手设置教程（0.6.0）
+# 新手设置教程（0.7.0）
 
 > 这份教程假设你**完全没配过**，从「装了什么」一路写到「按下去有反应」。
 > 0.5.0 没有固定槽位：和弦条数不限，按钮从「通用按键池」里取。
@@ -39,13 +39,13 @@
 | `controlify-3.5.3+mc26.2-universal.jar` | 手柄支持本体 | 报 `depends controlify` |
 | `cloth-config-26.2.155-fabric.jar` | 配置界面库 | 报 `depends cloth-config` |
 | `yet_another_config_lib_v3-3.9.7+26.2-fabric.jar` | Controlify 的依赖 | Controlify 起不来 |
-| `controlify-chords-0.6.0.jar` | 本模组 | 没有和弦功能 |
+| `controlify-chords-0.7.0.jar` | 本模组 | 没有和弦功能 |
 
 可选：`modmenu-20.0.3.jar`（有它主界面才有配置齿轮，不装也能用 F9/手柄）。
 
 > 只能放一个版本的 `controlify-chords`，旧的要删掉。
 
-**确认装对**：主界面 Mod Menu 里看到 `Controlify Chords 0.6.0`。
+**确认装对**：主界面 Mod Menu 里看到 `Controlify Chords 0.7.0`。
 
 ---
 
@@ -122,7 +122,16 @@ Controlify 设置 → 组合键 分类 → 把 Back / 触摸板 / L3 绑到「�
 | 触发键最长轻按 | 8（默认） |
 | 冷却 | 10（默认） |
 
-列表里既可以写编号（`1`、`#1`），也可以写完整 ID（`controlify:button/dpad_up`）。
+**最省事的写法：点按钮捕获。**
+
+列表下面有两个按钮：
+
+- **「捕获修饰键」**：点一下 → 画面切到“捕获按键” → 按下手柄上要当修饰键的按钮 → 自动返回并写入列表；
+- **「捕获触发键」**：同上，写入触发键列表。
+
+要加多个修饰键，就多点几次「捕获修饰键」，每次按一个。捕获到的按钮如果不在按键池里，会自动追加到池尾。
+
+也可以手写：编号（`1`、`#1`）或完整 ID（`controlify:button/dpad_up`）。
 
 两个列表的操作：列表默认展开，最后一行是“添加”按钮；点一下多一个空输入框，右侧有删除按钮。
 
@@ -329,9 +338,10 @@ key_key.xaero.minimap:key.keyboard.m
 
 ---
 
-## 8. 从 0.5.x / 0.4.x 升级
+## 8. 从 0.6.x / 0.5.x / 0.4.x 升级
 
-- 0.6.0 只是新增了编号写法，旧的完整 ID 写法仍然有效，不改也能用。
+- 0.7.0 新增“按手柄键捕获”，旧配置不受影响。
+- 0.6.0 新增编号写法，旧的完整 ID 写法仍然有效，不改也能用。
 - **`controlifychords:key_1..8` 已经移除**，所有成员改成 `controlify:button/xxx`（第 6 节）。
 - 用到旧写法 `controlify:jump`、`controlifychords:key_N` 的和弦会被跳过，日志提示“含有非物理按键 ID”。
 - 和弦条数不再限制 8 条；旧的 8 条会原样保留，可以继续加。
@@ -343,7 +353,7 @@ key_key.xaero.minimap:key.keyboard.m
 
 - 关掉某条：取消“启用”。
 - 删掉某条：打开“删除这条和弦”并保存。
-- 全部关掉：把 `controlify-chords-0.6.0.jar` 移出 `mods`。
+- 全部关掉：把 `controlify-chords-0.7.0.jar` 移出 `mods`。
 
 ---
 

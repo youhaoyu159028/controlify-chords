@@ -28,5 +28,12 @@
   "controlifychords.config.delete.tip": "Enable and save to delete this chord.",
   "controlifychords.config.available": "Available button IDs: %s",
   "key.controlifychords.open_config": "Open Chords settings",
-  "controlifychords.config.key_pool.index": "Pool indices (use #N in chords, e.g. #9):"
+  "controlifychords.config.key_pool.index": "Pool indices (use #N in chords, e.g. #9):",
+  "controlifychords.capture.title": "Capture button",
+  "controlifychords.capture.button": "Capture from controller",
+  "controlifychords.capture.prompt.modifier": "Press the button you want to use as a MODIFIER",
+  "controlifychords.capture.prompt.trigger": "Press the button you want to use as a TRIGGER",
+  "controlifychords.capture.hint": "It returns and writes the list automatically; Esc to cancel",
+  "controlifychords.capture.modifier": "Capture modifier",
+  "controlifychords.capture.trigger": "Capture trigger"
 }
