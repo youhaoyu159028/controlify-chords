@@ -41,7 +41,7 @@
 ## 安装
 
 1. 安装 Fabric Loader 0.19.3+、Fabric API、Controlify 3.5.3+、Cloth Config 26.2+（Controlify 还需要 YACL）。
-2. 把 `controlify-chords-0.7.0.jar` 放进 `mods/`。
+2. 把 `controlify-chords-0.7.1.jar` 放进 `mods/`。
 3. 打开配置：进世界后按 **F9**；或在 Controlify 里把按钮绑到「打开和弦设置（手柄）」；或 Mod Menu → Controlify Chords。
 4. 在「通用」页的**按键池**里列出你要用的按钮，然后在各和弦页引用它们。
 
@@ -186,7 +186,7 @@
 gradle build        # 需要 Gradle 9.8.1 + JDK 25
 ```
 
-产物：`build/libs/controlify-chords-0.7.0.jar`。
+产物：`build/libs/controlify-chords-0.7.1.jar`。
 
 > 仓库没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.8.1；本地要么装 Gradle 9.8.1，要么先执行 `gradle wrapper --gradle-version 9.8.1`。
 

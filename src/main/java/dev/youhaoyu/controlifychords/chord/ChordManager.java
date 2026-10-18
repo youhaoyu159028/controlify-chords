@@ -3,6 +3,7 @@ package dev.youhaoyu.controlifychords.chord;
 import dev.isxander.controlify.api.ControlifyApi;
 import dev.isxander.controlify.api.bind.InputBinding;
 import dev.isxander.controlify.controller.ControllerEntity;
+import dev.isxander.controlify.controller.input.ControllerStateView;
 import dev.youhaoyu.controlifychords.ControlifyChords;
 import dev.youhaoyu.controlifychords.config.ChordsConfig;
 import dev.youhaoyu.controlifychords.config.ConfigManager;
@@ -77,11 +78,16 @@ public final class ChordManager {
             RUNTIMES.forEach(Runtime::resetTransient);
         }
 
-        Set<Identifier> buttons = controller.input()
-                .map(input -> input.stateNow().getButtons())
-                .orElse(Set.of());
+        // 注意：getButtons() 返回的是“这个手柄有哪些按钮”，不是“哪些正被按下”，
+        // 必须用 isButtonDown 判断按下状态。
+        if (controller.input().isEmpty()) {
+            return;
+        }
+        ControllerStateView now = controller.input().get().stateNow();
+        ControllerStateView then = controller.input().get().stateThen();
+
         for (Identifier id : WATCH_RAW) {
-            if (buttons.contains(id)) {
+            if (now.isButtonDown(id)) {
                 RAW_PRESS_TICKS.putIfAbsent(id, tickCounter);
             } else {
                 RAW_PRESS_TICKS.remove(id);
@@ -89,7 +95,7 @@ public final class ChordManager {
         }
 
         for (Runtime runtime : RUNTIMES) {
-            runtime.tick(buttons);
+            runtime.tick(now, then);
         }
     }
 
@@ -300,9 +306,6 @@ public final class ChordManager {
         /** 同一组修饰键配置了多种顺序时为 true。 */
         private final boolean requiresOrder;
 
-        /** 触发键按下状态，避免多个和弦共享触发键时互相吞掉 justPressed。 */
-        private final Map<Identifier, Boolean> triggerDown = new HashMap<>();
-
         private Identifier pendingTrigger;
         private int pendingSince = -1;
         private int cooldownUntil = -1;
@@ -318,7 +321,6 @@ public final class ChordManager {
         }
 
         private void resetTransient() {
-            triggerDown.clear();
             clearPending();
         }
 
@@ -327,15 +329,13 @@ public final class ChordManager {
             pendingSince = -1;
         }
 
-        private void tick(Set<Identifier> buttons) {
-            // 先更新触发键状态：冷却期间也要更新，否则冷却结束会把“一直按着”误判成刚按下
+        private void tick(ControllerStateView now, ControllerStateView then) {
+            // 用前后两帧状态判断“刚按下”，不依赖自己维护的状态，避免同一 tick 多次读取出错
             Identifier justPressed = null;
             for (Identifier id : rawTriggers) {
-                boolean down = buttons.contains(id);
-                boolean wasDown = Boolean.TRUE.equals(triggerDown.get(id));
-                triggerDown.put(id, down);
-                if (down && !wasDown) {
+                if (now.isButtonDown(id) && !then.isButtonDown(id)) {
                     justPressed = id;
+                    break;
                 }
             }
 
@@ -343,7 +343,13 @@ public final class ChordManager {
                 return;
             }
 
-            boolean armed = buttons.containsAll(rawModifiers);
+            boolean armed = true;
+            for (Identifier id : rawModifiers) {
+                if (!now.isButtonDown(id)) {
+                    armed = false;
+                    break;
+                }
+            }
             int firstPressTick = Integer.MAX_VALUE;
             int lastPressTick = -1;
             if (armed) {
@@ -375,7 +381,7 @@ public final class ChordManager {
                     clearPending();
                     return;
                 }
-                if (!buttons.contains(pendingTrigger)) {
+                if (!now.isButtonDown(pendingTrigger) && then.isButtonDown(pendingTrigger)) {
                     if (tickCounter - pendingSince <= definition.maxTriggerTapTicks) {
                         fire();
                     }

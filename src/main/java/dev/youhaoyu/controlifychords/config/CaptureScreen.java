@@ -2,6 +2,7 @@ package dev.youhaoyu.controlifychords.config;
 
 import dev.isxander.controlify.api.ControlifyApi;
 import dev.isxander.controlify.controller.ControllerEntity;
+import dev.isxander.controlify.controller.input.ControllerStateView;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -9,9 +10,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -24,8 +23,6 @@ public final class CaptureScreen extends Screen {
     private final Component prompt;
     private final Consumer<String> onCaptured;
 
-    private final Set<Identifier> heldAtOpen = new HashSet<>();
-    private boolean initialised;
     private int openTicks;
 
     public CaptureScreen(Component prompt, Consumer<String> onCaptured) {
@@ -44,30 +41,23 @@ public final class CaptureScreen extends Screen {
     @Override
     public void tick() {
         openTicks++;
-        if (!initialised) {
-            heldAtOpen.addAll(currentButtons());
-            initialised = true;
-            return;
-        }
         if (openTicks < 3) {
             return;
         }
-        for (Identifier id : currentButtons()) {
-            if (!heldAtOpen.contains(id)) {
+        Optional<ControllerEntity> controller = ControlifyApi.get().getCurrentController();
+        if (controller.isEmpty() || controller.get().input().isEmpty()) {
+            return;
+        }
+        // getButtons() 是“手柄有哪些按钮”，是否按下要用 isButtonDown；
+        // 用 stateNow / stateThen 对比得到“这一 tick 刚按下”的按钮。
+        ControllerStateView now = controller.get().input().get().stateNow();
+        ControllerStateView then = controller.get().input().get().stateThen();
+        for (Identifier id : now.getButtons()) {
+            if (now.isButtonDown(id) && !then.isButtonDown(id)) {
                 onCaptured.accept(id.toString());
                 return;
             }
         }
-    }
-
-    private Set<Identifier> currentButtons() {
-        Optional<ControllerEntity> controller = ControlifyApi.get().getCurrentController();
-        if (controller.isEmpty()) {
-            return Set.of();
-        }
-        return controller.get().input()
-                .map(input -> input.stateNow().getButtons())
-                .orElse(Set.of());
     }
 
     @Override
