@@ -1,8 +1,8 @@
 # Controlify Chords
 
-给 [Controlify](https://modrinth.com/mod/controlify) 增加**有序和弦（ordered chord）**的 Fabric 客户端附属模组。
+给 [Controlify](https://modrinth.com/mod/controlify) 增加**组合键（修饰键集合 + 触发键集合）**的 Fabric 客户端附属模组。
 
-> 跟原仓库的 skeleton 相比，这一版补上了：和弦状态机、8 个专用和弦键、物理按键模式、Mixin 抑制、Cloth Config 配置界面、命令/按键/自定义动作分发，以及修好的构建链。
+> 跟原仓库的 skeleton 相比，这一版补上了：和弦状态机、两个列表模型、8 个专用和弦键、物理按键模式、Mixin 抑制、Cloth Config 配置界面、命令/按键/自定义动作分发，以及修好的构建链。
 >
 > **第一次用？直接看 [新手设置教程](docs/TUTORIAL.zh-CN.md)**（从安装到按键，含三条可抄的配置）。
 
@@ -21,25 +21,27 @@
 
 ---
 
-## 和弦语义
+## 和弦语义（0.4.0：两个列表）
 
-1. **修饰键有序**：`LB → RB → A` 与 `RB → LB → A` 是两条不同的和弦。
-2. **修饰键要长按**：至少按住 `minModifierHoldTicks`（默认 3 tick）。
-3. **触发键要轻按**：在修饰键全部按住后按下触发键，再在 `maxTriggerTapTicks`（默认 8 tick）内松开。
-4. **松开时执行**：动作在触发键松开的那一刻执行，一次按住只执行一次。
-5. **松开任意修饰键 = 取消**：不会触发，也不会残留状态。
-6. **同一个键可以兼任**：在 A 和弦里当修饰键、在 B 和弦里当触发键，互不影响；但**同一个和弦内**触发键不能同时是修饰键（物理上无法“先按住再轻按同一个键”）。
+一条和弦 = **修饰键列表** + **触发键列表**：
+
+1. **修饰键列表 = 一直按住的键**。列表里所有键都按住即成立，**顺序随便**，先按哪个都行。
+2. **触发键列表 = 轻按的键**。其中**任意一个**轻按，都会触发同一条动作。
+3. **修饰键要按住一会儿**：全部按住后再保持 `minModifierHoldTicks`（默认 3 tick）。
+4. **触发键要轻按**：按下后在 `maxTriggerTapTicks`（默认 8 tick）内松开。
+5. **松开时执行**：动作在触发键松开的那一刻执行，一次按住只执行一次。
+6. **松开任意修饰键 = 取消**：不触发，也不残留状态。
+7. **同一个键可以跨和弦兼任**：在 A 和弦里当修饰键、在 B 和弦里当触发键都行；但**同一条和弦里**不能同时出现在两个列表。
 
 状态机：
 
 ```
 IDLE
-  └─ 修饰键按配置顺序依次按下 → 顺序匹配
-      └─ 全部按住且 ≥ minHold
-          └─ 触发键 justPressed → PENDING
-              ├─ 触发键 justReleased 且 ≤ maxTap → 执行动作
-              ├─ 触发键按住 > maxTap → 取消
-              └─ 任意修饰键松开 → 取消
+  └─ 修饰键列表全部按住（顺序不限）且 ≥ minHold
+      └─ 触发键列表里任意一个 justPressed → PENDING
+          ├─ 该触发键 justReleased 且 ≤ maxTap → 执行动作
+          ├─ 该触发键按住 > maxTap → 取消
+          └─ 任意修饰键松开 → 取消
 ```
 
 ---
@@ -47,7 +49,7 @@ IDLE
 ## 安装
 
 1. 安装 Fabric Loader 0.19.3+、Fabric API、Controlify 3.5.3+、Cloth Config 26.2+（Controlify 还需要 YACL）。
-2. 把构建出的 `controlify-chords-0.3.0.jar` 放进 `mods/`。
+2. 把构建出的 `controlify-chords-0.4.0.jar` 放进 `mods/`。
 3. **物理按键模式（推荐）**：不需要在 Controlify 里绑任何东西，直接跳到第 4 步，在配置里写 `controlify:button/dpad_up` 这类 ID，按钮原功能保留。
    **绑定 ID 模式**：进入 **Controlify → 手柄设置 → 组合键分类**，把 `和弦键 1..8` 绑到按钮，再在配置里引用 `controlifychords:key_N`（该按钮会被占用）。
 4. 打开本模组配置：**进世界后按 `F9`**（不需要 Mod Menu），或 Mod Menu → Controlify Chords，或直接改 `config/controlify-chords.json`。
@@ -63,12 +65,12 @@ IDLE
 直接写 Controlify 的物理按键 ID，**不要**再把这个按钮绑到 `controlifychords:key_N`：
 
 ```json
-"modifiers": ["controlify:button/dpad_up"],
-"trigger": "controlify:button/north"
+"modifiers": ["controlify:button/dpad_up", "controlify:button/left_shoulder"],
+"triggers": ["controlify:button/north", "controlify:button/south"]
 ```
 
-- 十字上仍然保留它原来的功能（Controlify 里原来的绑定不动）。
-- 长按十字上 → 再轻按 north → 触发和弦。
+- 十字上、LB 仍然保留它们原来的功能（Controlify 里原来的绑定不动）。
+- 按住这两个键（顺序不限）→ 轻按 north 或 south → 触发和弦。
 - 和弦成立期间，这两个按钮的普通绑定会被 Mixin 临时抑制，避免双触发。
 - 单独轻按十字上（没进入和弦）不会抑制，原功能正常。
 - **注意**：开始和弦的那一帧，修饰键自己的原动作仍可能先触发一次（要先判断你是不是在起手和弦）。如果它是一次性动作（如打开地图），会感觉被误触；这种情况需要再做“按下缓冲 + 未成和弦时回放”，可以后续加。
@@ -89,7 +91,7 @@ IDLE
 
 ```json
 "modifiers": ["controlifychords:key_1"],
-"trigger": "controlifychords:key_2"
+"triggers": ["controlifychords:key_2"]
 ```
 
 需要先在 Controlify 里把两个按钮分别绑到 `和弦键 1`、`和弦键 2`。优点是完全不依赖 Mixin；缺点是按钮会被这个绑定占用。
@@ -107,9 +109,9 @@ IDLE
   "chords": [
     {
       "enabled": true,
-      "name": "LB → RB → A 交换副手",
-      "modifiers": ["controlifychords:key_1", "controlifychords:key_2"],
-      "trigger": "controlifychords:key_3",
+      "name": "LB + RB → A/B 交换副手",
+      "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
+      "triggers": ["controlify:button/south", "controlify:button/east"],
       "actionType": "key_mapping",
       "actionValue": "key.swapOffhand",
       "minModifierHoldTicks": 3,
@@ -126,8 +128,9 @@ IDLE
 
 | 字段 | 说明 |
 |---|---|
-| `modifiers` | 有序修饰键，1–4 个，不能重复；顺序即按下顺序 |
-| `trigger` | 触发键；不能出现在同一和弦的 `modifiers` 里 |
+| `modifiers` | 修饰键列表，1–8 个，不能重复；顺序无所谓，全部按住即可 |
+| `triggers` | 触发键列表，1–8 个；任意一个轻按都会触发 |
+| `trigger` | **0.3.x 旧字段**，仅为兼容保留；启动时会自动并入 `triggers` 并清空 |
 | `actionType` | `key_mapping` / `command` / `custom` |
 | `actionValue` | 按键名（如 `key.swapOffhand`）、命令（如 `/spawn`）或自定义动作 ID |
 | `minModifierHoldTicks` | 修饰键最短按住时间，0–40 |
@@ -153,9 +156,9 @@ IDLE
 
 Mixin 目标是 Controlify 的内部类 `InputBindingImpl#pushState`，属于**版本敏感**实现：Controlify 大版本升级后若改动该方法，需要同步更新，否则可能不生效（不会崩，只是回到双触发）。
 
-### 2. 同一 tick 内的顺序无法区分
+### 2. 触发键必须在修饰键之后按下
 
-两个修饰键在同一 tick 按下时，顺序按内部遍历顺序决定；需要严格顺序时请错开至少 1 tick。
+修饰键未全部按住时按下的触发键不会被缓存；如果你先按 A 再按 LB，这次 A 不算触发。
 
 ### 3. 只处理当前控制器
 
@@ -182,7 +185,7 @@ Mixin 目标是 Controlify 的内部类 `InputBindingImpl#pushState`，属于**�
 gradle build        # 需要 Gradle 9.8.1 + JDK 25
 ```
 
-产物：`build/libs/controlify-chords-0.3.0.jar`。
+产物：`build/libs/controlify-chords-0.4.0.jar`。
 
 > 为什么不是 `./gradlew`：仓库目前没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.8.1；本地要么装 Gradle 9.8.1，要么先执行 `gradle wrapper --gradle-version 9.8.1`。
 
@@ -206,7 +209,7 @@ src/main/java/dev/youhaoyu/controlifychords/
 ├── ControlifyChordsEntrypoint.java    # Controlify pre-init，注册 8 个键
 ├── chord/
 │   ├── ChordBindings.java             # 绑定注册 / ID 解析
-│   ├── ChordManager.java              # 有序状态机
+│   ├── ChordManager.java              # 两列表状态机
 │   ├── ChordDefinition.java
 │   ├── ChordAction.java
 │   └── ChordActionRegistry.java

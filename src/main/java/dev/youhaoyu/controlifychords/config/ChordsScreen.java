@@ -1,17 +1,18 @@
 package dev.youhaoyu.controlifychords.config;
 
 import dev.youhaoyu.controlifychords.chord.ChordBindings;
-import dev.youhaoyu.controlifychords.chord.ChordManager;
 import dev.youhaoyu.controlifychords.chord.ChordDefinition;
+import dev.youhaoyu.controlifychords.chord.ChordManager;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/** Cloth Config 配置界面：一个通用页 + 每个和弦一页。 */
+/** Cloth Config 配置界面：一个通用页 + 每个和弦一页（两个列表：修饰键 / 触发键）。 */
 public final class ChordsScreen {
 
     private ChordsScreen() {
@@ -65,23 +66,24 @@ public final class ChordsScreen {
                 .setSaveConsumer(value -> chord.name = value == null ? "" : value.trim())
                 .build());
 
-        List<String> modifiers = chord.modifiers;
-        for (int m = 0; m < ChordsConfig.MAX_MODIFIERS; m++) {
-            final int modifierIndex = m;
-            String current = m < modifiers.size() ? safe(modifiers.get(m)) : "";
-            category.addEntry(entries
-                    .startStrField(Component.translatable("controlifychords.config.modifier", m + 1), current)
-                    .setDefaultValue("")
-                    .setTooltip(Component.translatable("controlifychords.config.binding.tip"))
-                    .setSaveConsumer(value -> setModifier(chord, modifierIndex, value))
-                    .build());
-        }
-
+        // 修饰键：一个列表，顺序无所谓，全部按住即可
         category.addEntry(entries
-                .startStrField(Component.translatable("controlifychords.config.trigger"), safe(chord.trigger))
-                .setDefaultValue("")
-                .setTooltip(Component.translatable("controlifychords.config.binding.tip"))
-                .setSaveConsumer(value -> chord.trigger = value == null ? "" : value.trim())
+                .startStrList(Component.translatable("controlifychords.config.modifiers"),
+                        new ArrayList<>(chord.modifiers))
+                .setDefaultValue(new ArrayList<>())
+                .setExpanded(true)
+                .setTooltip(Component.translatable("controlifychords.config.modifiers.tip"))
+                .setSaveConsumer(list -> chord.modifiers = clean(list))
+                .build());
+
+        // 触发键：一个列表，任意一个轻按都会触发同一动作
+        category.addEntry(entries
+                .startStrList(Component.translatable("controlifychords.config.triggers"),
+                        new ArrayList<>(chord.triggers))
+                .setDefaultValue(new ArrayList<>())
+                .setExpanded(true)
+                .setTooltip(Component.translatable("controlifychords.config.triggers.tip"))
+                .setSaveConsumer(list -> chord.triggers = clean(list))
                 .build());
 
         category.addEntry(entries
@@ -126,11 +128,20 @@ public final class ChordsScreen {
                 .build());
     }
 
-    private static void setModifier(ChordDefinition chord, int index, String value) {
-        while (chord.modifiers.size() <= index) {
-            chord.modifiers.add("");
+    private static List<String> clean(List<String> input) {
+        List<String> out = new ArrayList<>();
+        if (input != null) {
+            for (String value : input) {
+                if (value == null) {
+                    continue;
+                }
+                String trimmed = value.trim();
+                if (!trimmed.isEmpty() && !out.contains(trimmed)) {
+                    out.add(trimmed);
+                }
+            }
         }
-        chord.modifiers.set(index, value == null ? "" : value.trim());
+        return out;
     }
 
     private static String safe(String value) {
