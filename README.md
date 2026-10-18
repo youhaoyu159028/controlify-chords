@@ -25,13 +25,23 @@
 
 一条和弦 = **修饰键列表** + **触发键列表**：
 
-1. **修饰键列表 = 一直按住的键**。列表里所有键都按住即成立，**默认顺序随便**；给这条和弦打开 `ordered` 后，就必须严格按列表顺序依次按下。
+1. **修饰键列表 = 一直按住的键**。全部按住即成立，顺序默认随便。
+   **自动顺序区分**：如果同一组键被配置成多种顺序（`LB+RB` 和 `RB+LB` 各一条），这两条就会自动按实际按下顺序区分，互不干扰；只有一种顺序时，先后随便。
 2. **触发键列表 = 轻按的键**。其中**任意一个**轻按，都会触发同一条动作。
 3. **修饰键要按住一会儿**：全部按住后再保持 `minModifierHoldTicks`（默认 3 tick）。
 4. **触发键要轻按**：按下后在 `maxTriggerTapTicks`（默认 8 tick）内松开。
 5. **松开时执行**：动作在触发键松开的那一刻执行，一次按住只执行一次。
 6. **松开任意修饰键 = 取消**：不触发，也不残留状态。
 7. **同一个键可以跨和弦兼任**：在 A 和弦里当修饰键、在 B 和弦里当触发键都行；但**同一条和弦里**不能同时出现在两个列表。
+
+例：
+
+| 和弦 | modifiers | triggers | 结果 |
+|---|---|---|---|
+| 1 | `[LB, RB]` | `[A]` | 先按 LB 再按 RB，轻按 A → 动作 1 |
+| 2 | `[RB, LB]` | `[B]` | 先按 RB 再按 LB，轻按 B → 动作 2 |
+
+两条共存；因为同一组 `{LB,RB}` 出现了两种顺序，系统自动按顺序区分。如果只配置和弦 1，则 `LB→RB→A` 和 `RB→LB→A` 都算和弦 1。
 
 状态机：
 
@@ -112,7 +122,6 @@ IDLE
       "name": "LB + RB → A/B 交换副手",
       "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
       "triggers": ["controlify:button/south", "controlify:button/east"],
-      "ordered": false,
       "actionType": "key_mapping",
       "actionValue": "key.swapOffhand",
       "minModifierHoldTicks": 3,
@@ -131,7 +140,7 @@ IDLE
 |---|---|
 | `modifiers` | 修饰键列表，1–8 个，不能重复；顺序无所谓，全部按住即可 |
 | `triggers` | 触发键列表，1–8 个；任意一个轻按都会触发 |
-| `ordered` | `false`（默认）顺序随便；`true` 必须按 `modifiers` 列表顺序按下 |
+| `ordered` | 可选覆盖。默认自动：同一组修饰键配置了多种顺序时才按顺序区分；写 `true` 可强制按顺序，写 `false` 强制不分顺序 |
 | `trigger` | **0.3.x 旧字段**，仅为兼容保留；启动时会自动并入 `triggers` 并清空 |
 | `actionType` | `key_mapping` / `command` / `custom` |
 | `actionValue` | 按键名（如 `key.swapOffhand`）、命令（如 `/spawn`）或自定义动作 ID |

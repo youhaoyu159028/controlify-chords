@@ -50,11 +50,10 @@ public final class ChordsConfig {
             chord.modifiers = clean(chord.modifiers, MAX_MODIFIERS);
             chord.triggers = clean(chord.triggers, MAX_TRIGGERS);
 
-            // 0.3.x → 0.4.x 迁移：旧的单个 trigger 并入 triggers；
-            // 旧版语义是“有序”，所以同时把 ordered 打开，保证老配置行为不变。
+            // 0.3.x → 0.4.x 迁移：旧的单个 trigger 并入 triggers。
+            // 顺序是否敏感由“同一组键是否配置了多种顺序”自动决定，不需要在这里写死。
             if (chord.triggers.isEmpty() && chord.trigger != null && !chord.trigger.isBlank()) {
                 chord.triggers.add(chord.trigger.trim());
-                chord.ordered = true;
             }
             chord.trigger = "";
 

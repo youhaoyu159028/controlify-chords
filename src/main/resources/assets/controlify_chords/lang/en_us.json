@@ -6,7 +6,7 @@
   "controlifychords.config.general": "General",
   "controlifychords.config.debug": "Debug logging",
   "controlifychords.config.debug.tip": "Log chord state transitions.",
-  "controlifychords.config.help": "Modifier list: any order by default, just hold them all; enable \"must be pressed in list order\" to require sequence. Trigger list: tapping any one runs the same action. Releasing any modifier cancels; the action runs when the trigger is released.",
+  "controlifychords.config.help": "Modifier list: hold them all. If the same key set is configured in more than one order (e.g. LB+RB and RB+LB), those chords are automatically distinguished by press order; with a single order, order does not matter. Trigger list: tapping any one runs the same action. Releasing any modifier cancels; the action runs when the trigger is released.",
   "controlifychords.config.chord": "Chord %s",
   "controlifychords.config.enabled": "Enabled",
   "controlifychords.config.name": "Display name",
@@ -23,7 +23,5 @@
   "controlifychords.config.available": "Available binding IDs: %s",
   "key.controlifychords.open_config": "Open Chords settings",
   "controlifychords.binding.open_config": "Open Chords settings (controller)",
-  "controlifychords.binding.open_config.desc": "Bind any controller button to this in Controlify; pressing it opens the chord config.",
-  "controlifychords.config.ordered": "Modifiers must be pressed in list order",
-  "controlifychords.config.ordered.tip": "Off (default): hold them all, any order. On: press them strictly top-to-bottom; LB→RB and RB→LB become different chords (0.3.x behaviour)."
+  "controlifychords.binding.open_config.desc": "Bind any controller button to this in Controlify; pressing it opens the chord config."
 }

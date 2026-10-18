@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * 和弦状态机：<b>修饰键集合</b> + <b>触发键集合</b>。
@@ -143,6 +144,19 @@ public final class ChordManager {
         ChordsConfig config = ConfigManager.get();
         Set<String> signatures = new LinkedHashSet<>();
 
+        // 同一组修饰键如果被配置成多种顺序（LB+RB 与 RB+LB），这些和弦就必须按顺序区分；
+        // 只有一种顺序时，顺序随便，避免“必须先按列表顺序”的僵硬感。
+        Map<String, Set<String>> modifierOrders = new HashMap<>();
+        for (ChordDefinition candidate : config.chords) {
+            if (candidate == null || !candidate.enabled || candidate.modifiers == null
+                    || candidate.modifiers.isEmpty()) {
+                continue;
+            }
+            String setKey = new TreeSet<>(candidate.modifiers).toString();
+            modifierOrders.computeIfAbsent(setKey, k -> new HashSet<>())
+                    .add(String.join(">", candidate.modifiers));
+        }
+
         for (int i = 0; i < config.chords.size(); i++) {
             ChordDefinition chord = config.chords.get(i);
             if (chord == null || !chord.enabled) {
@@ -176,6 +190,10 @@ public final class ChordManager {
                 ControlifyChords.LOGGER.warn("[Chords] 和弦 #{} 与前面的和弦完全相同，跳过", i + 1);
                 continue;
             }
+
+            String modifierSetKey = new TreeSet<>(chord.modifiers).toString();
+            boolean requiresOrder = chord.ordered
+                    || modifierOrders.getOrDefault(modifierSetKey, Set.of()).size() > 1;
 
             if (raw) {
                 List<Identifier> modifiers = new ArrayList<>();
@@ -211,7 +229,7 @@ public final class ChordManager {
                         WATCH_RAW.add(id);
                     }
                 }
-                RUNTIMES.add(new Runtime(i, chord, modifiers, triggers, List.of(), List.of()));
+                RUNTIMES.add(new Runtime(i, chord, modifiers, triggers, List.of(), List.of(), requiresOrder));
             } else {
                 List<InputBindingSupplier> modifiers = new ArrayList<>();
                 List<InputBindingSupplier> triggers = new ArrayList<>();
@@ -242,7 +260,7 @@ public final class ChordManager {
                 if (missing) {
                     continue;
                 }
-                RUNTIMES.add(new Runtime(i, chord, List.of(), List.of(), modifiers, triggers));
+                RUNTIMES.add(new Runtime(i, chord, List.of(), List.of(), modifiers, triggers, requiresOrder));
             }
         }
 
@@ -264,6 +282,8 @@ public final class ChordManager {
         private final List<Identifier> rawTriggers;
         private final List<InputBindingSupplier> bindModifiers;
         private final List<InputBindingSupplier> bindTriggers;
+        /** 是否要求按列表顺序按下：同组键配置了多种顺序时为 true。 */
+        private final boolean requiresOrder;
 
         /** 每个运行时的触发键按下状态，避免多个和弦共享触发键时互相吞掉 justPressed。 */
         private final Map<Identifier, Boolean> rawTriggerDown = new HashMap<>();
@@ -275,13 +295,15 @@ public final class ChordManager {
 
         private Runtime(int index, ChordDefinition definition,
                         List<Identifier> rawModifiers, List<Identifier> rawTriggers,
-                        List<InputBindingSupplier> bindModifiers, List<InputBindingSupplier> bindTriggers) {
+                        List<InputBindingSupplier> bindModifiers, List<InputBindingSupplier> bindTriggers,
+                        boolean requiresOrder) {
             this.index = index;
             this.definition = definition;
             this.rawModifiers = rawModifiers;
             this.rawTriggers = rawTriggers;
             this.bindModifiers = bindModifiers;
             this.bindTriggers = bindTriggers;
+            this.requiresOrder = requiresOrder;
         }
 
         private boolean isRaw() {
@@ -333,7 +355,7 @@ public final class ChordManager {
                         firstPressTick = Math.min(firstPressTick, pressedAt);
                         lastPressTick = Math.max(lastPressTick, pressedAt);
                     }
-                    if (armed && definition.ordered && !orderMatchesRaw()) {
+                    if (armed && requiresOrder && !orderMatchesRaw()) {
                         armed = false;
                     }
                 }
@@ -352,13 +374,13 @@ public final class ChordManager {
                     firstPressTick = Math.min(firstPressTick, pressedAt);
                     lastPressTick = Math.max(lastPressTick, pressedAt);
                 }
-                if (armed && definition.ordered && !orderMatchesBindings()) {
+                if (armed && requiresOrder && !orderMatchesBindings()) {
                     armed = false;
                 }
             }
 
             // 有序：第一个修饰键按住足够久；无序：最后一个按下的修饰键也按住足够久
-            int lastModifierPressTick = definition.ordered ? firstPressTick : lastPressTick;
+            int lastModifierPressTick = requiresOrder ? firstPressTick : lastPressTick;
 
             // 物理按键：和弦成立或已有待触发键时，抑制这些按钮的普通绑定
             if (isRaw() && (armed || pendingRaw != null)) {
