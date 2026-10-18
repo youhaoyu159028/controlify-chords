@@ -21,5 +21,7 @@
   "controlifychords.config.max_tap": "Max trigger tap (ticks)",
   "controlifychords.config.cooldown": "Cooldown (ticks)",
   "controlifychords.config.available": "Available binding IDs: %s",
-  "key.controlifychords.open_config": "Open Chords settings"
+  "key.controlifychords.open_config": "Open Chords settings",
+  "controlifychords.binding.open_config": "Open Chords settings (controller)",
+  "controlifychords.binding.open_config.desc": "Bind any controller button to this in Controlify; pressing it opens the chord config."
 }

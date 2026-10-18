@@ -49,10 +49,10 @@ IDLE
 ## 安装
 
 1. 安装 Fabric Loader 0.19.3+、Fabric API、Controlify 3.5.3+、Cloth Config 26.2+（Controlify 还需要 YACL）。
-2. 把构建出的 `controlify-chords-0.4.0.jar` 放进 `mods/`。
+2. 把构建出的 `controlify-chords-0.4.1.jar` 放进 `mods/`。
 3. **物理按键模式（推荐）**：不需要在 Controlify 里绑任何东西，直接跳到第 4 步，在配置里写 `controlify:button/dpad_up` 这类 ID，按钮原功能保留。
    **绑定 ID 模式**：进入 **Controlify → 手柄设置 → 组合键分类**，把 `和弦键 1..8` 绑到按钮，再在配置里引用 `controlifychords:key_N`（该按钮会被占用）。
-4. 打开本模组配置：**进世界后按 `F9`**（不需要 Mod Menu），或 Mod Menu → Controlify Chords，或直接改 `config/controlify-chords.json`。
+4. 打开本模组配置：**进世界后按 `F9`**（不需要 Mod Menu），或在 Controlify 里把按钮绑到「打开和弦设置（手柄）」后按下，或 Mod Menu → Controlify Chords，或直接改 `config/controlify-chords.json`。
 
 详细步骤见 [新手设置教程](docs/TUTORIAL.zh-CN.md)。
 
@@ -185,7 +185,7 @@ Mixin 目标是 Controlify 的内部类 `InputBindingImpl#pushState`，属于**�
 gradle build        # 需要 Gradle 9.8.1 + JDK 25
 ```
 
-产物：`build/libs/controlify-chords-0.4.0.jar`。
+产物：`build/libs/controlify-chords-0.4.1.jar`。
 
 > 为什么不是 `./gradlew`：仓库目前没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.8.1；本地要么装 Gradle 9.8.1，要么先执行 `gradle wrapper --gradle-version 9.8.1`。
 

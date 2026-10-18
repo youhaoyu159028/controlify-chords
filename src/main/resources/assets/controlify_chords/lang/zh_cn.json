@@ -21,5 +21,7 @@
   "controlifychords.config.max_tap": "触发键最长轻按（tick）",
   "controlifychords.config.cooldown": "冷却（tick）",
   "controlifychords.config.available": "可用绑定 ID：%s",
-  "key.controlifychords.open_config": "打开和弦设置"
+  "key.controlifychords.open_config": "打开和弦设置",
+  "controlifychords.binding.open_config": "打开和弦设置（手柄）",
+  "controlifychords.binding.open_config.desc": "在 Controlify 里把任意按钮绑到它，按下即可打开和弦配置界面。"
 }

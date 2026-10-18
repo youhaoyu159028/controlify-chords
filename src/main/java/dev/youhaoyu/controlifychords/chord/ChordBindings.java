@@ -20,6 +20,7 @@ public final class ChordBindings {
     public static final int KEY_SLOTS = 8;
 
     private static final InputBindingSupplier[] KEYS = new InputBindingSupplier[KEY_SLOTS];
+    private static InputBindingSupplier openConfig;
     private static final Map<String, InputBindingSupplier> EXTERNAL = new HashMap<>();
     private static final List<String> KNOWN_IDS = new ArrayList<>();
     private static boolean registered;
@@ -43,6 +44,14 @@ public final class ChordBindings {
                     .category(category)
                     .allowedContexts(BindContext.IN_GAME));
         }
+        // 不依赖键盘的配置入口：在 Controlify 里把任意按钮绑到它，按下即可打开设置
+        openConfig = api.registerBinding(builder -> builder
+                .id(ControlifyChords.MOD_ID, "open_config")
+                .name(Component.translatable("controlifychords.binding.open_config"))
+                .description(Component.translatable("controlifychords.binding.open_config.desc"))
+                .category(category)
+                .allowedContexts(BindContext.IN_GAME));
+
         registered = true;
 
         try {
@@ -57,6 +66,11 @@ public final class ChordBindings {
     /** 物理按键 ID，例如 {@code controlify:button/dpad_up}。 */
     public static boolean isRawInput(String id) {
         return id != null && id.startsWith("controlify:button/");
+    }
+
+    /** “打开设置”的绑定；未注册时为 null。 */
+    public static InputBindingSupplier openConfig() {
+        return openConfig;
     }
 
     public static InputBindingSupplier key(int index) {

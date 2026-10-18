@@ -1,6 +1,9 @@
 package dev.youhaoyu.controlifychords;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.isxander.controlify.api.ControlifyApi;
+import dev.isxander.controlify.api.bind.InputBinding;
+import dev.youhaoyu.controlifychords.chord.ChordBindings;
 import dev.youhaoyu.controlifychords.chord.ChordManager;
 import dev.youhaoyu.controlifychords.config.ChordsScreen;
 import dev.youhaoyu.controlifychords.config.ConfigManager;
@@ -42,7 +45,16 @@ public final class ControlifyChords implements ClientModInitializer {
 
     private static void handleOpenConfig(Minecraft client) {
         // 原版只会在没有界面打开时把按键记为 click，所以这里不需要再判断 screen
-        if (OPEN_CONFIG.consumeClick()) {
+        boolean byKey = OPEN_CONFIG.consumeClick();
+        boolean byController = ControlifyApi.get().getCurrentController()
+                .map(controller -> {
+                    InputBinding binding = ChordBindings.openConfig() == null
+                            ? null
+                            : ChordBindings.openConfig().onOrNull(controller);
+                    return binding != null && binding.justPressed();
+                })
+                .orElse(false);
+        if (byKey || byController) {
             client.setScreenAndShow(ChordsScreen.create(null));
         }
     }
