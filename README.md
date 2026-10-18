@@ -2,7 +2,9 @@
 
 给 [Controlify](https://modrinth.com/mod/controlify) 增加**有序和弦（ordered chord）**的 Fabric 客户端附属模组。
 
-> 跟原仓库的 skeleton 相比，这一版补上了：和弦状态机、8 个专用和弦键、Cloth Config 配置界面、命令/按键/自定义动作分发，以及修好的构建链。
+> 跟原仓库的 skeleton 相比，这一版补上了：和弦状态机、8 个专用和弦键、物理按键模式、Mixin 抑制、Cloth Config 配置界面、命令/按键/自定义动作分发，以及修好的构建链。
+>
+> **第一次用？直接看 [新手设置教程](docs/TUTORIAL.zh-CN.md)**（从安装到按键，含三条可抄的配置）。
 
 ## 目标基线
 
@@ -44,10 +46,13 @@ IDLE
 
 ## 安装
 
-1. 安装 Fabric Loader 0.19.3+、Fabric API、Controlify 3.5.3+、Cloth Config 26.2+。
-2. 把构建出的 `controlify-chords-0.2.0.jar` 放进 `mods/`。
-3. 启动游戏，进入 **Controlify → 手柄设置 → 组合键分类**，把 `和弦键 1..8` 绑到你想用的按钮。
+1. 安装 Fabric Loader 0.19.3+、Fabric API、Controlify 3.5.3+、Cloth Config 26.2+（Controlify 还需要 YACL）。
+2. 把构建出的 `controlify-chords-0.3.0.jar` 放进 `mods/`。
+3. **物理按键模式（推荐）**：不需要在 Controlify 里绑任何东西，直接跳到第 4 步，在配置里写 `controlify:button/dpad_up` 这类 ID，按钮原功能保留。
+   **绑定 ID 模式**：进入 **Controlify → 手柄设置 → 组合键分类**，把 `和弦键 1..8` 绑到按钮，再在配置里引用 `controlifychords:key_N`（该按钮会被占用）。
 4. 打开本模组配置（Mod Menu → Controlify Chords，或直接改 `config/controlify-chords.json`）。
+
+详细步骤见 [新手设置教程](docs/TUTORIAL.zh-CN.md)。
 
 ---
 
@@ -66,6 +71,7 @@ IDLE
 - 长按十字上 → 再轻按 north → 触发和弦。
 - 和弦成立期间，这两个按钮的普通绑定会被 Mixin 临时抑制，避免双触发。
 - 单独轻按十字上（没进入和弦）不会抑制，原功能正常。
+- **注意**：开始和弦的那一帧，修饰键自己的原动作仍可能先触发一次（要先判断你是不是在起手和弦）。如果它是一次性动作（如打开地图），会感觉被误触；这种情况需要再做“按下缓冲 + 未成和弦时回放”，可以后续加。
 
 常用按钮 ID：
 
@@ -130,22 +136,22 @@ IDLE
 
 ### 可用绑定 ID
 
-- 本模组：`controlifychords:key_1` … `controlifychords:key_8`（推荐，专用键）
-- Controlify：`controlify:jump`、`controlify:sneak`、`controlify:attack` 等
-- 查看全部：日志开启 `debug` 后，启动时会打印 Controlify 暴露的绑定 ID 数量；也可以用 `ChordBindings.knownIds()` 扩展成界面列表。
+- 物理按键：`controlify:button/dpad_up`、`controlify:button/south` 等（**推荐**，保留原功能，完整列表见教程第 6 节）
+- 本模组专用键：`controlifychords:key_1` … `controlifychords:key_8`（需要在 Controlify 里手动绑定）
+- Controlify 绑定：`controlify:jump`、`controlify:sneak`、`controlify:attack` 等（会与普通动作同时触发）
 
 ---
 
 ## 已知限制（重要）
 
-### 1. 普通绑定仍会触发（没有 Mixin）
+### 1. 抑制只覆盖“和弦进行中”的按钮
 
-Controlify 的公开 API **没有**“吞掉某个绑定输出”的能力（`InputBinding` 只有读取状态；`suppressed` 是内部字段，没有 setter）。因此：
+0.3.0 起，物理按键模式会用 Mixin 把和弦进行中的按钮对应绑定标记为 `suppressed`，所以按触发键不会同时触发它自己的动作。但有两个前提：
 
-- 如果你把 LB 同时绑到 `controlify:sneak` 和 `controlifychords:key_1`，按 LB 时**潜行和和弦会同时生效**；
-- 想要严格“不重复触发”，请把和弦用的按钮**只**绑到 `controlifychords:key_N`，不要同时绑普通动作。
+- **起手那一帧**：修饰键刚按下时和弦还没成立，它自己的动作可能先触发一次。一次性动作（如“打开地图”）会明显，持续动作（视角）基本无感。彻底消除需要“按下缓冲 + 未成和弦时回放”，尚未实现。
+- **绑定 ID 模式不抑制**：`controlifychords:key_N` 仍然依赖“这个按钮只服务于和弦”来避免双触发。
 
-为什么不在 v0.1 用 Mixin：Mixin 需要改 Controlify 内部类，和“向上兼容”的目标直接冲突。等状态机稳定、确定要支持“复用普通按键”时，再单独做实验分支（会在 README 标注版本）。
+Mixin 目标是 Controlify 的内部类 `InputBindingImpl#pushState`，属于**版本敏感**实现：Controlify 大版本升级后若改动该方法，需要同步更新，否则可能不生效（不会崩，只是回到双触发）。
 
 ### 2. 同一 tick 内的顺序无法区分
 
@@ -157,9 +163,14 @@ Controlify 的公开 API **没有**“吞掉某个绑定输出”的能力（`In
 
 ### 4. 只在游戏内生效
 
-和弦键声明了 `BindContext.IN_GAME`，且管理器在 `screen != null` 时跳过。
+- 绑定 ID 模式：和弦键声明了 `BindContext.IN_GAME`。
+- 物理按键模式：管理器要求 `client.player != null`，主菜单里不工作。
 
-### 5. 版本兼容
+### 5. 物理按键模式只支持 button
+
+`controlify:button/*` 是“按下/没按下”的按钮。摇杆方向（axis）、扳机行程（trigger）、手柄陀螺仪暂不支持；组合键成员也不能混用物理按键与绑定 ID。
+
+### 6. 版本兼容
 
 `minecraft >=26.2` 只是声明，不代表 26.3/26.4 一定可用。升级流程：改 `gradle.properties` → CI → 实机验证 → 再改元数据。未来会用单独 PR 加多版本矩阵。
 
@@ -171,9 +182,9 @@ Controlify 的公开 API **没有**“吞掉某个绑定输出”的能力（`In
 gradle build        # 需要 Gradle 9.8.1 + JDK 25
 ```
 
-产物：`build/libs/controlify-chords-0.2.0.jar`。
+产物：`build/libs/controlify-chords-0.3.0.jar`。
 
-> 为什么不是 `./gradlew`：仓库目前没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.5；本地请装 Gradle 9.5 或自己 `gradle wrapper --gradle-version 9.8.1`。
+> 为什么不是 `./gradlew`：仓库目前没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.8.1；本地要么装 Gradle 9.8.1，要么先执行 `gradle wrapper --gradle-version 9.8.1`。
 
 ### 之前 CI 为什么失败
 
@@ -182,6 +193,7 @@ gradle build        # 需要 Gradle 9.8.1 + JDK 25
 | JDK 25 + Gradle 8.14.3 | Gradle 8.14 不支持运行在 Java 25 上（需要 9.1+），构建在启动阶段就失败 | 升到 Gradle 9.8.1 |
 | `build.gradle` 没有 `mappings` | Loom 在混淆版本上会报错；26.x 是非混淆版本，本就不需要 mappings | 换用 `net.fabricmc.fabric-loom` 插件，去掉 mappings |
 | 26.1–26.3 没有 Yarn 映射 | 无法按 Yarn 名写代码 | 26.x 用 Mojang 官方名（`Component`、`Identifier`、`KeyMapping`） |
+| 非混淆 Loom 没有 `modImplementation` | 依赖配置报 `Could not find method modImplementation()` | 改用 `implementation` / `compileOnly` / `api` |
 | `loom 1.15-SNAPSHOT` | 只有 alpha，且旧 Loom 不认非混淆流程 | 用 Loom 1.18.4 + 新插件 id |
 
 ---
