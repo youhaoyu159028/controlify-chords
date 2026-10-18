@@ -1,4 +1,4 @@
-# 新手设置教程（0.5.0）
+# 新手设置教程（0.6.0）
 
 > 这份教程假设你**完全没配过**，从「装了什么」一路写到「按下去有反应」。
 > 0.5.0 没有固定槽位：和弦条数不限，按钮从「通用按键池」里取。
@@ -39,13 +39,13 @@
 | `controlify-3.5.3+mc26.2-universal.jar` | 手柄支持本体 | 报 `depends controlify` |
 | `cloth-config-26.2.155-fabric.jar` | 配置界面库 | 报 `depends cloth-config` |
 | `yet_another_config_lib_v3-3.9.7+26.2-fabric.jar` | Controlify 的依赖 | Controlify 起不来 |
-| `controlify-chords-0.5.0.jar` | 本模组 | 没有和弦功能 |
+| `controlify-chords-0.6.0.jar` | 本模组 | 没有和弦功能 |
 
 可选：`modmenu-20.0.3.jar`（有它主界面才有配置齿轮，不装也能用 F9/手柄）。
 
 > 只能放一个版本的 `controlify-chords`，旧的要删掉。
 
-**确认装对**：主界面 Mod Menu 里看到 `Controlify Chords 0.5.0`。
+**确认装对**：主界面 Mod Menu 里看到 `Controlify Chords 0.6.0`。
 
 ---
 
@@ -83,20 +83,30 @@ Controlify 设置 → 组合键 分类 → 把 Back / 触摸板 / L3 绑到「�
 
 ## 3. 手把手配第一条
 
-### 3.1 先在「通用」页建按键池
+### 3.1 看一眼「通用」页的按键池
 
-打开「通用」页，第一项是 **通用按键池**。点“添加”，把你要用的按钮逐个加进去，例如：
+打开「通用」页，第一项是 **通用按键池**，下面会列出编号：
 
 ```
-controlify:button/dpad_up
-controlify:button/dpad_down
-controlify:button/south
-controlify:button/east
-controlify:button/left_shoulder
-controlify:button/right_shoulder
+1 = controlify:button/dpad_up
+2 = controlify:button/dpad_down
+...
+5 = controlify:button/south
+9 = controlify:button/left_shoulder
+10 = controlify:button/right_shoulder
 ```
 
-规则：**和弦只能用池里的按钮**。池为空表示不限制，但建议填上，填错 ID 时日志会直接告诉你“不在池里”。
+默认已经预填 16 个标准按钮，不用你输入：
+
+| 编号 | 按钮 | 编号 | 按钮 |
+|---|---|---|---|
+| 1–4 | 十字上/下/左/右 | 9–10 | LB / RB |
+| 5–8 | A / B / X / Y | 11–12 | L3 / R3 |
+| 13–16 | Start / Back / Guide / 触摸板 | | |
+
+记住你要用的编号就行，**不用记长 ID**。
+
+> 池的顺序就是编号。想加按钮就在末尾追加；在中间插入会让已有 `#N` 指向别的键。
 
 ### 3.2 再填「和弦 1」页
 
@@ -104,13 +114,15 @@ controlify:button/right_shoulder
 |---|---|
 | 启用 | 打开 |
 | 显示名称 | `十字上 + A 交换副手` |
-| 修饰键列表 | 添加一行：`controlify:button/dpad_up` |
-| 触发键列表 | 添加一行：`controlify:button/south` |
+| 修饰键列表 | 添加一行：`1`（十字上） |
+| 触发键列表 | 添加一行：`5`（A） |
 | 动作类型 | `KEY_MAPPING` |
 | 动作参数 | `key.swapOffhand` |
 | 修饰键最短按住 | 3（默认） |
 | 触发键最长轻按 | 8（默认） |
 | 冷却 | 10（默认） |
+
+列表里既可以写编号（`1`、`#1`），也可以写完整 ID（`controlify:button/dpad_up`）。
 
 两个列表的操作：列表默认展开，最后一行是“添加”按钮；点一下多一个空输入框，右侧有删除按钮。
 
@@ -132,8 +144,8 @@ controlify:button/right_shoulder
 
 | 和弦 | 修饰键列表 | 触发键列表 | 按法 | 动作 |
 |---|---|---|---|---|
-| 1 | `left_shoulder`、`right_shoulder` | `south` | LB → RB → 轻按 A | 动作 1 |
-| 2 | `right_shoulder`、`left_shoulder` | `east` | RB → LB → 轻按 B | 动作 2 |
+| 1 | `9`、`10` | `5` | LB → RB → 轻按 A | 动作 1 |
+| 2 | `10`、`9` | `6` | RB → LB → 轻按 B | 动作 2 |
 
 - 同一组键出现两种不同顺序 → 自动按顺序区分；
 - 只有一条时 → `LB→RB` 和 `RB→LB` 都算它，顺序随便。
@@ -198,8 +210,8 @@ key_key.xaero.minimap:key.keyboard.m
 {
   "enabled": true,
   "name": "十字上 + A 交换副手",
-  "modifiers": ["controlify:button/dpad_up"],
-  "triggers": ["controlify:button/south"],
+  "modifiers": ["1"],
+  "triggers": ["5"],
   "actionType": "key_mapping",
   "actionValue": "key.swapOffhand",
   "minModifierHoldTicks": 3,
@@ -214,8 +226,8 @@ key_key.xaero.minimap:key.keyboard.m
 {
   "enabled": true,
   "name": "LB + RB → A/B 小地图",
-  "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
-  "triggers": ["controlify:button/south", "controlify:button/east"],
+  "modifiers": ["9", "10"],
+  "triggers": ["5", "6"],
   "actionType": "key_mapping",
   "actionValue": "key.xaero.minimap",
   "minModifierHoldTicks": 3,
@@ -231,8 +243,8 @@ key_key.xaero.minimap:key.keyboard.m
   {
     "enabled": true,
     "name": "LB → RB → A",
-    "modifiers": ["controlify:button/left_shoulder", "controlify:button/right_shoulder"],
-    "triggers": ["controlify:button/south"],
+    "modifiers": ["9", "10"],
+    "triggers": ["5"],
     "actionType": "key_mapping",
     "actionValue": "key.swapOffhand",
     "minModifierHoldTicks": 3,
@@ -242,8 +254,8 @@ key_key.xaero.minimap:key.keyboard.m
   {
     "enabled": true,
     "name": "RB → LB → B",
-    "modifiers": ["controlify:button/right_shoulder", "controlify:button/left_shoulder"],
-    "triggers": ["controlify:button/east"],
+    "modifiers": ["10", "9"],
+    "triggers": ["6"],
     "actionType": "key_mapping",
     "actionValue": "key.drop",
     "minModifierHoldTicks": 3,
@@ -293,6 +305,7 @@ key_key.xaero.minimap:key.keyboard.m
 | `同一个键同时出现在两个列表里` | 一个键不能在同一条里兼任 | 换一个 |
 | `含有非物理按键 ID` | 用了 `controlifychords:key_N` 或 `controlify:jump` | 改成 `controlify:button/xxx` |
 | `不在“按键池”里` | 池里没有这个按钮 | 通用页加进去 |
+| `但按键池只有 N 项` | 写的编号超出池长度 | 看通用页的编号，或直接在末尾追加按钮 |
 | `与前面的和弦完全相同` | 两条内容一样 | 删掉一条 |
 
 ### 第二步：对照症状
@@ -316,8 +329,9 @@ key_key.xaero.minimap:key.keyboard.m
 
 ---
 
-## 8. 从 0.4.x 升级
+## 8. 从 0.5.x / 0.4.x 升级
 
+- 0.6.0 只是新增了编号写法，旧的完整 ID 写法仍然有效，不改也能用。
 - **`controlifychords:key_1..8` 已经移除**，所有成员改成 `controlify:button/xxx`（第 6 节）。
 - 用到旧写法 `controlify:jump`、`controlifychords:key_N` 的和弦会被跳过，日志提示“含有非物理按键 ID”。
 - 和弦条数不再限制 8 条；旧的 8 条会原样保留，可以继续加。
@@ -329,7 +343,7 @@ key_key.xaero.minimap:key.keyboard.m
 
 - 关掉某条：取消“启用”。
 - 删掉某条：打开“删除这条和弦”并保存。
-- 全部关掉：把 `controlify-chords-0.5.0.jar` 移出 `mods`。
+- 全部关掉：把 `controlify-chords-0.6.0.jar` 移出 `mods`。
 
 ---
 

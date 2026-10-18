@@ -30,25 +30,30 @@ public final class ChordsConfig {
     public static ChordsConfig createDefault() {
         ChordsConfig config = new ChordsConfig();
 
-        config.keyPool.add("controlify:button/dpad_up");
-        config.keyPool.add("controlify:button/dpad_down");
-        config.keyPool.add("controlify:button/dpad_left");
-        config.keyPool.add("controlify:button/dpad_right");
-        config.keyPool.add("controlify:button/south");
-        config.keyPool.add("controlify:button/east");
-        config.keyPool.add("controlify:button/west");
-        config.keyPool.add("controlify:button/north");
-        config.keyPool.add("controlify:button/left_shoulder");
-        config.keyPool.add("controlify:button/right_shoulder");
-        config.keyPool.add("controlify:button/left_stick");
-        config.keyPool.add("controlify:button/right_stick");
+        // 编号就是列表顺序，默认把标准手柄按钮全部预填，用户不需要手输 ID
+        config.keyPool.add("controlify:button/dpad_up");        // 1
+        config.keyPool.add("controlify:button/dpad_down");      // 2
+        config.keyPool.add("controlify:button/dpad_left");      // 3
+        config.keyPool.add("controlify:button/dpad_right");     // 4
+        config.keyPool.add("controlify:button/south");          // 5  A
+        config.keyPool.add("controlify:button/east");           // 6  B
+        config.keyPool.add("controlify:button/west");           // 7  X
+        config.keyPool.add("controlify:button/north");          // 8  Y
+        config.keyPool.add("controlify:button/left_shoulder");  // 9  LB
+        config.keyPool.add("controlify:button/right_shoulder"); // 10 RB
+        config.keyPool.add("controlify:button/left_stick");     // 11 L3
+        config.keyPool.add("controlify:button/right_stick");    // 12 R3
+        config.keyPool.add("controlify:button/start");          // 13
+        config.keyPool.add("controlify:button/back");           // 14
+        config.keyPool.add("controlify:button/guide");          // 15
+        config.keyPool.add("controlify:button/touchpad");       // 16
 
         // 一条示例（默认关闭），其余留空，由界面里的“新增”页自行添加
         ChordDefinition example = new ChordDefinition();
         example.enabled = false;
         example.name = "LB + A 交换副手";
-        example.modifiers.add("controlify:button/left_shoulder");
-        example.triggers.add("controlify:button/south");
+        example.modifiers.add("#9");
+        example.triggers.add("#5");
         example.actionType = ChordDefinition.ActionType.KEY_MAPPING;
         example.actionValue = "key.swapOffhand";
         config.chords.add(example);

@@ -63,6 +63,13 @@ public final class ChordsScreen {
                 .build());
 
         general.addEntry(entries
+                .startTextDescription(Component.translatable("controlifychords.config.key_pool.index"))
+                .build());
+        general.addEntry(entries
+                .startTextDescription(Component.literal(poolIndexText(config.keyPool)))
+                .build());
+
+        general.addEntry(entries
                 .startBooleanToggle(Component.translatable("controlifychords.config.debug"), config.debug)
                 .setDefaultValue(false)
                 .setTooltip(Component.translatable("controlifychords.config.debug.tip"))
@@ -187,6 +194,21 @@ public final class ChordsScreen {
                 .setDefaultValue(10)
                 .setSaveConsumer(value -> chord.cooldownTicks = value)
                 .build());
+    }
+
+    /** 把按键池渲染成 “1 = xxx” 的多行说明，用户照着填编号即可。 */
+    private static String poolIndexText(List<String> pool) {
+        if (pool.isEmpty()) {
+            return "-";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < pool.size(); i++) {
+            if (i > 0) {
+                sb.append('\n');
+            }
+            sb.append(i + 1).append(" = ").append(pool.get(i));
+        }
+        return sb.toString();
     }
 
     private static List<String> clean(List<String> input) {

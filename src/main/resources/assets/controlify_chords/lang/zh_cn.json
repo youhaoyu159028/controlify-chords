@@ -27,5 +27,6 @@
   "controlifychords.config.delete": "删除这条和弦",
   "controlifychords.config.delete.tip": "打开后点保存，这条和弦会被删除。",
   "controlifychords.config.available": "可用按钮 ID：%s",
-  "key.controlifychords.open_config": "打开和弦设置"
+  "key.controlifychords.open_config": "打开和弦设置",
+  "controlifychords.config.key_pool.index": "按键池编号（写 #编号 即可，例如 #9）："
 }

@@ -27,5 +27,6 @@
   "controlifychords.config.delete": "Delete this chord",
   "controlifychords.config.delete.tip": "Enable and save to delete this chord.",
   "controlifychords.config.available": "Available button IDs: %s",
-  "key.controlifychords.open_config": "Open Chords settings"
+  "key.controlifychords.open_config": "Open Chords settings",
+  "controlifychords.config.key_pool.index": "Pool indices (use #N in chords, e.g. #9):"
 }

@@ -123,22 +123,20 @@ public final class ChordManager {
         RAW_PRESS_TICKS.clear();
 
         ChordsConfig config = ConfigManager.get();
-        Set<String> pool = new HashSet<>(config.keyPool);
+        List<String> pool = config.keyPool;
+        Set<String> poolSet = new HashSet<>(pool);
         Set<String> signatures = new LinkedHashSet<>();
 
-        // 同一组修饰键如果配了多种顺序，这几条必须按顺序区分
-        Map<String, Set<String>> modifierOrders = new HashMap<>();
-        for (ChordDefinition candidate : config.chords) {
-            if (candidate == null || !candidate.enabled
-                    || candidate.modifiers == null || candidate.modifiers.isEmpty()) {
-                continue;
-            }
-            String setKey = new TreeSet<>(candidate.modifiers).toString();
-            modifierOrders.computeIfAbsent(setKey, k -> new HashSet<>())
-                    .add(String.join(">", candidate.modifiers));
+        int count = config.chords.size();
+        List<List<String>> resolvedModifiers = new ArrayList<>();
+        List<List<String>> resolvedTriggers = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            resolvedModifiers.add(null);
+            resolvedTriggers.add(null);
         }
 
-        for (int i = 0; i < config.chords.size(); i++) {
+        // 第一遍：把 #N / N 解析成按钮 ID，并做基础校验
+        for (int i = 0; i < count; i++) {
             ChordDefinition chord = config.chords.get(i);
             if (chord == null || !chord.enabled) {
                 continue;
@@ -147,31 +145,63 @@ public final class ChordManager {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 已启用但修饰键或触发键列表为空，跳过", i + 1);
                 continue;
             }
-            if (new HashSet<>(chord.modifiers).size() != chord.modifiers.size()
-                    || new HashSet<>(chord.triggers).size() != chord.triggers.size()) {
+            List<String> modifiers = resolveAll(chord.modifiers, pool, i + 1, "修饰键");
+            if (modifiers == null) {
+                continue;
+            }
+            List<String> triggers = resolveAll(chord.triggers, pool, i + 1, "触发键");
+            if (triggers == null) {
+                continue;
+            }
+            if (new HashSet<>(modifiers).size() != modifiers.size()
+                    || new HashSet<>(triggers).size() != triggers.size()) {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 的列表里有重复项，跳过", i + 1);
                 continue;
             }
-            if (chord.modifiers.stream().anyMatch(chord.triggers::contains)) {
+            if (modifiers.stream().anyMatch(triggers::contains)) {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 的同一个键同时出现在两个列表里，跳过", i + 1);
                 continue;
             }
-            boolean nonRaw = chord.modifiers.stream().anyMatch(id -> !ChordBindings.isRawInput(id))
-                    || chord.triggers.stream().anyMatch(id -> !ChordBindings.isRawInput(id));
+            boolean nonRaw = modifiers.stream().anyMatch(id -> !ChordBindings.isRawInput(id))
+                    || triggers.stream().anyMatch(id -> !ChordBindings.isRawInput(id));
             if (nonRaw) {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 含有非物理按键 ID（旧版 key_N / controlify:jump 已不支持），跳过", i + 1);
                 continue;
             }
-            if (!pool.isEmpty()) {
-                boolean outside = chord.modifiers.stream().anyMatch(id -> !pool.contains(id))
-                        || chord.triggers.stream().anyMatch(id -> !pool.contains(id));
+            if (!poolSet.isEmpty()) {
+                boolean outside = modifiers.stream().anyMatch(id -> !poolSet.contains(id))
+                        || triggers.stream().anyMatch(id -> !poolSet.contains(id));
                 if (outside) {
                     ControlifyChords.LOGGER.warn("[Chords] #{} 用了不在“按键池”里的按钮，跳过（先在通用页把按钮加进池）", i + 1);
                     continue;
                 }
             }
+            resolvedModifiers.set(i, modifiers);
+            resolvedTriggers.set(i, triggers);
+        }
 
-            String signature = String.join(">", chord.modifiers) + "|" + String.join(">", chord.triggers);
+        // 同一组修饰键如果配了多种顺序，这几条必须按顺序区分
+        Map<String, Set<String>> modifierOrders = new HashMap<>();
+        for (int i = 0; i < count; i++) {
+            List<String> modifiers = resolvedModifiers.get(i);
+            if (modifiers == null) {
+                continue;
+            }
+            String setKey = new TreeSet<>(modifiers).toString();
+            modifierOrders.computeIfAbsent(setKey, k -> new HashSet<>())
+                    .add(String.join(">", modifiers));
+        }
+
+        // 第二遍：去重同名和弦并建立运行时
+        for (int i = 0; i < count; i++) {
+            List<String> modifierIds = resolvedModifiers.get(i);
+            List<String> triggerIds = resolvedTriggers.get(i);
+            if (modifierIds == null || triggerIds == null) {
+                continue;
+            }
+            ChordDefinition chord = config.chords.get(i);
+
+            String signature = String.join(">", modifierIds) + "|" + String.join(">", triggerIds);
             if (!signatures.add(signature)) {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 与前面的和弦完全相同，跳过", i + 1);
                 continue;
@@ -180,7 +210,7 @@ public final class ChordManager {
             List<Identifier> modifiers = new ArrayList<>();
             List<Identifier> triggers = new ArrayList<>();
             boolean invalid = false;
-            for (String id : chord.modifiers) {
+            for (String id : modifierIds) {
                 Identifier rl = Identifier.tryParse(id);
                 if (rl == null) {
                     invalid = true;
@@ -188,7 +218,7 @@ public final class ChordManager {
                 }
                 modifiers.add(rl);
             }
-            for (String id : chord.triggers) {
+            for (String id : triggerIds) {
                 Identifier rl = Identifier.tryParse(id);
                 if (rl == null) {
                     invalid = true;
@@ -212,7 +242,7 @@ public final class ChordManager {
                 }
             }
 
-            String modifierSetKey = new TreeSet<>(chord.modifiers).toString();
+            String modifierSetKey = new TreeSet<>(modifierIds).toString();
             boolean requiresOrder = chord.ordered
                     || modifierOrders.getOrDefault(modifierSetKey, Set.of()).size() > 1;
 
@@ -220,7 +250,45 @@ public final class ChordManager {
         }
 
         ControlifyChords.LOGGER.info("[Chords] 已装载 {} 条和弦，监听 {} 个按钮（按键池 {} 个）",
-                RUNTIMES.size(), WATCH_RAW.size(), config.keyPool.size());
+                RUNTIMES.size(), WATCH_RAW.size(), pool.size());
+    }
+
+    /**
+     * 把和弦成员解析成按钮 ID：
+     * <ul>
+     *   <li>{@code #9} 或 {@code 9}：按键池第 9 个按钮（1 开始）；</li>
+     *   <li>其他：当作完整 ID，例如 {@code controlify:button/south}。</li>
+     * </ul>
+     * 任何一项无效时返回 null（调用方跳过这条和弦）。
+     */
+    private static List<String> resolveAll(List<String> tokens, List<String> pool, int chordNumber, String role) {
+        List<String> out = new ArrayList<>();
+        for (String token : tokens) {
+            if (token == null || token.isBlank()) {
+                ControlifyChords.LOGGER.warn("[Chords] #{} 的{}里有空项，跳过", chordNumber, role);
+                return null;
+            }
+            String value = token.trim();
+            String number = value.startsWith("#") ? value.substring(1) : value;
+            if (number.matches("\\d+")) {
+                int index;
+                try {
+                    index = Integer.parseInt(number);
+                } catch (NumberFormatException e) {
+                    ControlifyChords.LOGGER.warn("[Chords] #{} 的{}编号 '{}' 非法，跳过", chordNumber, role, value);
+                    return null;
+                }
+                if (index < 1 || index > pool.size()) {
+                    ControlifyChords.LOGGER.warn("[Chords] #{} 的{}写的是 '{}'，但按键池只有 {} 项，跳过",
+                            chordNumber, role, value, pool.size());
+                    return null;
+                }
+                out.add(pool.get(index - 1));
+            } else {
+                out.add(value);
+            }
+        }
+        return out;
     }
 
     private static final class Runtime {

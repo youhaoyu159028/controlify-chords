@@ -41,21 +41,34 @@
 ## 安装
 
 1. 安装 Fabric Loader 0.19.3+、Fabric API、Controlify 3.5.3+、Cloth Config 26.2+（Controlify 还需要 YACL）。
-2. 把 `controlify-chords-0.5.0.jar` 放进 `mods/`。
+2. 把 `controlify-chords-0.6.0.jar` 放进 `mods/`。
 3. 打开配置：进世界后按 **F9**；或在 Controlify 里把按钮绑到「打开和弦设置（手柄）」；或 Mod Menu → Controlify Chords。
 4. 在「通用」页的**按键池**里列出你要用的按钮，然后在各和弦页引用它们。
 
 ---
 
-## 按键池（0.5.0 新增）
+## 按键池与编号引用（0.6.0）
 
-`通用` 页有一个“通用按键池”列表：
+`通用` 页有一个“通用按键池”。默认已预填 16 个标准手柄按钮，**池的顺序就是编号**：
 
-- 只有池里的按钮才能被和弦使用；池为空表示不限制（兼容旧配置）。
-- 池不限长度：手柄上所有能按的按钮都可以放进去。
-- 和弦条数也不限，界面最后一页永远是「新增和弦」，填内容保存即追加；每条和弦底部有「删除这条和弦」开关。
+| 编号 | 按钮 | 编号 | 按钮 |
+|---|---|---|---|
+| 1–4 | 十字上/下/左/右 | 9–10 | LB / RB |
+| 5–8 | A / B / X / Y | 11–12 | L3 / R3 |
+| 13–16 | Start / Back / Guide / 触摸板 | | |
 
-为什么要有池：它相当于“这个手柄上我允许用于和弦的按钮清单”，避免手滑填错 ID，也让日志能明确指出“这个按钮不在池里”。
+和弦的 `modifiers` / `triggers` 可以写：
+
+- `#9` 或 `9`：池里第 9 个按钮（不必手输长 ID）；
+- `controlify:button/left_shoulder`：完整 ID，仍然支持。
+
+规则与注意：
+
+- 只有池里的按钮才能被和弦使用；池为空表示不限制。
+- 和弦条数不限；界面最后一页永远是「新增和弦」，每条底部有「删除这条和弦」。
+- **池顺序就是编号**：在中间插入或调整顺序，已有和弦的 `#N` 会指向别的按钮。只在末尾追加最安全；要重排就先改成完整 ID。
+
+为什么要有池：它是“这台手柄上我允许用于和弦的按钮清单”，既能省掉手输，也能让日志明确指出“这个按钮不在池里”。
 
 ---
 
@@ -79,8 +92,8 @@
     {
       "enabled": true,
       "name": "LB + A 交换副手",
-      "modifiers": ["controlify:button/left_shoulder"],
-      "triggers": ["controlify:button/south"],
+      "modifiers": ["#9"],
+      "triggers": ["#5"],
       "actionType": "key_mapping",
       "actionValue": "key.swapOffhand",
       "minModifierHoldTicks": 3,
@@ -97,8 +110,8 @@
 |---|---|
 | `keyPool` | 通用按键池；只有池内按钮可用于和弦，留空表示不限制 |
 | `chords` | 和弦数组，**条数不限**（防御上限 128） |
-| `modifiers` | 修饰键列表，1–8 个，不能重复 |
-| `triggers` | 触发键列表，1–8 个；任意一个轻按都会触发 |
+| `modifiers` | 修饰键列表，1–8 个，不能重复；可写 `#9` 或完整 ID |
+| `triggers` | 触发键列表，1–8 个；任意一个轻按都会触发；可写 `#5` 或完整 ID |
 | `ordered` | 可选覆盖。默认自动：同一组修饰键配置了多种顺序时才按顺序区分；`true` 强制按顺序，`false` 强制不分顺序 |
 | `actionType` | `key_mapping` / `command` / `custom` |
 | `actionValue` | 按键名（如 `key.swapOffhand`）、命令（如 `/spawn`）或自定义动作 ID |
@@ -153,7 +166,9 @@
 
 ---
 
-## 从 0.4.x 升级（重要）
+## 从 0.5.x / 0.4.x 升级
+
+0.6.0 新增按键池编号，旧配置里的完整 ID 仍然有效，无需改动。
 
 0.5.0 **移除了** 8 个专用和弦键 `controlifychords:key_1..8` 和“绑定 ID 模式”，成员统一使用 `controlify:button/xxx`。
 
@@ -169,7 +184,7 @@
 gradle build        # 需要 Gradle 9.8.1 + JDK 25
 ```
 
-产物：`build/libs/controlify-chords-0.5.0.jar`。
+产物：`build/libs/controlify-chords-0.6.0.jar`。
 
 > 仓库没有 wrapper。CI 用 `gradle/actions/setup-gradle` 指定 9.8.1；本地要么装 Gradle 9.8.1，要么先执行 `gradle wrapper --gradle-version 9.8.1`。
 
