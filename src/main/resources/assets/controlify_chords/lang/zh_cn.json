@@ -19,5 +19,6 @@
   "controlifychords.config.min_hold": "修饰键最短按住（tick）",
   "controlifychords.config.max_tap": "触发键最长轻按（tick）",
   "controlifychords.config.cooldown": "冷却（tick）",
-  "controlifychords.config.available": "可用绑定 ID：%s"
+  "controlifychords.config.available": "可用绑定 ID：%s",
+  "key.controlifychords.open_config": "打开和弦设置"
 }

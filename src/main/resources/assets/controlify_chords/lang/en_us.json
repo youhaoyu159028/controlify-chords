@@ -19,5 +19,6 @@
   "controlifychords.config.min_hold": "Min modifier hold (ticks)",
   "controlifychords.config.max_tap": "Max trigger tap (ticks)",
   "controlifychords.config.cooldown": "Cooldown (ticks)",
-  "controlifychords.config.available": "Available binding IDs: %s"
+  "controlifychords.config.available": "Available binding IDs: %s",
+  "key.controlifychords.open_config": "Open Chords settings"
 }

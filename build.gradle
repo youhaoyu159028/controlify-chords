@@ -27,6 +27,8 @@ dependencies {
     // 直接用标准的 implementation / compileOnly / api。
     // Fabric API 是 bundle（外层 jar 只有嵌套 jar），按模块依赖才能拿到 ClientTickEvents。
     implementation "net.fabricmc.fabric-api:fabric-lifecycle-events-v1:${project.fabric_lifecycle_version}"
+    // “F9 打开设置”的按键注册（不依赖 Mod Menu）
+    implementation "net.fabricmc.fabric-api:fabric-key-mapping-api-v1:${project.fabric_key_mapping_version}"
 
     // Controlify：只编译期依赖，不打包、不修改
     compileOnly "maven.modrinth:controlify:${project.controlify_version}"
