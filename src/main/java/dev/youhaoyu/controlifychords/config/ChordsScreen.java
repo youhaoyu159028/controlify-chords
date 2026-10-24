@@ -15,10 +15,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 配置界面：通用页（按键池 + 调试）+ 每条和弦一页 + 最后“新增和弦”一页。
- * 和弦条数不设固定上限，保存时把填了内容的新增页追加进配置。
+ * 配置界面：
+ * <ul>
+ *   <li>通用页：修饰键池、触发键池（各自可捕获按钮填入）；</li>
+ *   <li>和弦 N 页：4 个修饰键下拉 + 4 个触发键下拉，选项来自两个池；</li>
+ *   <li>最后一页：新增和弦。</li>
+ * </ul>
  */
 public final class ChordsScreen {
+
+    private static final int SLOTS = 4;
 
     private ChordsScreen() {
     }
@@ -56,20 +62,40 @@ public final class ChordsScreen {
         ConfigCategory general = builder.getOrCreateCategory(Component.translatable("controlifychords.config.general"));
 
         general.addEntry(entries
-                .startStrList(Component.translatable("controlifychords.config.key_pool"),
-                        new ArrayList<>(config.keyPool))
+                .startTextDescription(Component.translatable("controlifychords.config.pool.modifier.desc"))
+                .build());
+        general.addEntry(entries
+                .startStrList(Component.translatable("controlifychords.config.pool.modifier"),
+                        new ArrayList<>(config.modifierPool))
                 .setDefaultValue(new ArrayList<>())
                 .setExpanded(true)
-                .setTooltip(Component.translatable("controlifychords.config.key_pool.tip"))
-                .setSaveConsumer(list -> config.keyPool = clean(list))
+                .setTooltip(Component.translatable("controlifychords.config.pool.tip"))
+                .setSaveConsumer(list -> config.modifierPool = clean(list))
                 .build());
+        general.addEntry(new CaptureEntry(
+                Component.translatable("controlifychords.capture.pool.modifier"),
+                Component.translatable("controlifychords.capture.button"),
+                Component.translatable("controlifychords.capture.prompt.modifier"),
+                id -> addToPool(config.modifierPool, id),
+                () -> Optional.empty()));
 
         general.addEntry(entries
-                .startTextDescription(Component.translatable("controlifychords.config.key_pool.index"))
+                .startTextDescription(Component.translatable("controlifychords.config.pool.trigger.desc"))
                 .build());
         general.addEntry(entries
-                .startTextDescription(Component.literal(poolIndexText(config.keyPool)))
+                .startStrList(Component.translatable("controlifychords.config.pool.trigger"),
+                        new ArrayList<>(config.triggerPool))
+                .setDefaultValue(new ArrayList<>())
+                .setExpanded(true)
+                .setTooltip(Component.translatable("controlifychords.config.pool.tip"))
+                .setSaveConsumer(list -> config.triggerPool = clean(list))
                 .build());
+        general.addEntry(new CaptureEntry(
+                Component.translatable("controlifychords.capture.pool.trigger"),
+                Component.translatable("controlifychords.capture.button"),
+                Component.translatable("controlifychords.capture.prompt.trigger"),
+                id -> addToPool(config.triggerPool, id),
+                () -> Optional.empty()));
 
         general.addEntry(entries
                 .startBooleanToggle(Component.translatable("controlifychords.config.debug"), config.debug)
@@ -81,7 +107,6 @@ public final class ChordsScreen {
         general.addEntry(entries
                 .startTextDescription(Component.translatable("controlifychords.config.help"))
                 .build());
-
         general.addEntry(entries
                 .startTextDescription(Component.translatable("controlifychords.config.available",
                         ChordBindings.idHint()))
@@ -94,9 +119,7 @@ public final class ChordsScreen {
                     Component.translatable("controlifychords.config.chord", i + 1));
 
             if (!chord.name.isBlank()) {
-                category.addEntry(entries
-                        .startTextDescription(Component.literal(chord.name))
-                        .build());
+                category.addEntry(entries.startTextDescription(Component.literal(chord.name)).build());
             }
 
             category.addEntry(entries
@@ -111,7 +134,7 @@ public final class ChordsScreen {
                     .setSaveConsumer(value -> chord.name = value == null ? "" : value.trim())
                     .build());
 
-            addChordEntries(category, entries, chord);
+            addChordEntries(category, entries, chord, config);
 
             category.addEntry(entries
                     .startBooleanToggle(Component.translatable("controlifychords.config.delete"), false)
@@ -126,7 +149,6 @@ public final class ChordsScreen {
         addPage.addEntry(entries
                 .startTextDescription(Component.translatable("controlifychords.config.chord.new.tip"))
                 .build());
-
         addPage.addEntry(entries
                 .startBooleanToggle(Component.translatable("controlifychords.config.enabled"), extra.enabled)
                 .setDefaultValue(false)
@@ -137,43 +159,26 @@ public final class ChordsScreen {
                 .setDefaultValue("")
                 .setSaveConsumer(value -> extra.name = value == null ? "" : value.trim())
                 .build());
-        addChordEntries(addPage, entries, extra);
+        addChordEntries(addPage, entries, extra, config);
 
         return builder.build();
     }
 
-    private static void addChordEntries(ConfigCategory category, ConfigEntryBuilder entries, ChordDefinition chord) {
-        category.addEntry(entries
-                .startStrList(Component.translatable("controlifychords.config.modifiers"),
-                        new ArrayList<>(chord.modifiers))
-                .setDefaultValue(new ArrayList<>())
-                .setExpanded(true)
-                .setTooltip(Component.translatable("controlifychords.config.modifiers.tip"))
-                .setSaveConsumer(list -> chord.modifiers = clean(list))
-                .build());
+    private static void addChordEntries(ConfigCategory category, ConfigEntryBuilder entries,
+                                        ChordDefinition chord, ChordsConfig config) {
+        // 修饰键：4 个下拉，选项来自“修饰键池”
+        for (int i = 0; i < SLOTS; i++) {
+            addDropdown(category, entries,
+                    Component.translatable("controlifychords.config.modifier.slot", i + 1),
+                    chord.modifiers, i, config.modifierPool);
+        }
 
-        category.addEntry(entries
-                .startStrList(Component.translatable("controlifychords.config.triggers"),
-                        new ArrayList<>(chord.triggers))
-                .setDefaultValue(new ArrayList<>())
-                .setExpanded(true)
-                .setTooltip(Component.translatable("controlifychords.config.triggers.tip"))
-                .setSaveConsumer(list -> chord.triggers = clean(list))
-                .build());
-
-        category.addEntry(new CaptureEntry(
-                Component.translatable("controlifychords.capture.modifier"),
-                Component.translatable("controlifychords.capture.button"),
-                Component.translatable("controlifychords.capture.prompt.modifier"),
-                id -> addCaptured(chord.modifiers, id),
-                () -> Optional.empty()));
-
-        category.addEntry(new CaptureEntry(
-                Component.translatable("controlifychords.capture.trigger"),
-                Component.translatable("controlifychords.capture.button"),
-                Component.translatable("controlifychords.capture.prompt.trigger"),
-                id -> addCaptured(chord.triggers, id),
-                () -> Optional.empty()));
+        // 触发键：4 个下拉，选项来自“触发键池”
+        for (int i = 0; i < SLOTS; i++) {
+            addDropdown(category, entries,
+                    Component.translatable("controlifychords.config.trigger.slot", i + 1),
+                    chord.triggers, i, config.triggerPool);
+        }
 
         category.addEntry(entries
                 .startEnumSelector(Component.translatable("controlifychords.config.action_type"),
@@ -212,33 +217,48 @@ public final class ChordsScreen {
                 .build());
     }
 
-    /** 捕获到的按钮直接写进和弦列表；池里没有就追加到池尾，避免被“不在池里”校验拦掉。 */
-    private static void addCaptured(List<String> target, String id) {
-        if (!target.contains(id)) {
-            target.add(id);
+    /** 一个下拉框：选项 = (空) + 池内按钮 + 当前值（兼容旧配置里不在池里的键）。 */
+    private static void addDropdown(ConfigCategory category, ConfigEntryBuilder entries,
+                                    Component label, List<String> target, int index, List<String> pool) {
+        String current = index < target.size() && target.get(index) != null ? target.get(index) : "";
+
+        List<String> options = new ArrayList<>();
+        options.add("");
+        for (String id : pool) {
+            if (!options.contains(id)) {
+                options.add(id);
+            }
         }
-        ChordsConfig config = ConfigManager.get();
-        if (!config.keyPool.contains(id)) {
-            config.keyPool.add(id);
+        if (!current.isEmpty() && !options.contains(current)) {
+            options.add(current);
+        }
+
+        category.addEntry(entries
+                .startDropdownMenu(label, current, value -> value,
+                        value -> value == null || value.isEmpty()
+                                ? Component.translatable("controlifychords.config.empty")
+                                : Component.literal(value))
+                .setSelections(options)
+                .setDefaultValue("")
+                .setSaveConsumer(value -> setSlot(target, index, value))
+                .build());
+    }
+
+    /** 写回固定下标；空串保留占位，由 normalize 统一清理。 */
+    private static void setSlot(List<String> target, int index, String value) {
+        while (target.size() <= index) {
+            target.add("");
+        }
+        target.set(index, value == null ? "" : value);
+    }
+
+    private static void addToPool(List<String> pool, String id) {
+        if (!pool.contains(id)) {
+            pool.add(id);
         }
         ConfigManager.save();
         ChordManager.invalidate();
         Minecraft.getInstance().setScreenAndShow(ChordsScreen.create(null));
-    }
-
-    /** 把按键池渲染成 “1 = xxx” 的多行说明，用户照着填编号即可。 */
-    private static String poolIndexText(List<String> pool) {
-        if (pool.isEmpty()) {
-            return "-";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < pool.size(); i++) {
-            if (i > 0) {
-                sb.append('\n');
-            }
-            sb.append(i + 1).append(" = ").append(pool.get(i));
-        }
-        return sb.toString();
     }
 
     private static List<String> clean(List<String> input) {

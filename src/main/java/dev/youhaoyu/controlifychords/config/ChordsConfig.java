@@ -6,23 +6,25 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/** 配置根对象：不限和弦条数 + 一个通用按键池。 */
+/** 配置根对象：不限和弦条数 + 修饰键池 / 触发键池。 */
 public final class ChordsConfig {
 
-    /** 单条和弦里修饰键/触发键的软上限，防止误粘贴超长列表。 */
-    public static final int MAX_MODIFIERS = 8;
-    public static final int MAX_TRIGGERS = 8;
-
-    /** 和弦条数上限（真正限制只用于防御异常配置，正常使用远远用不到）。 */
+    public static final int MAX_MODIFIERS = 4;
+    public static final int MAX_TRIGGERS = 4;
     public static final int MAX_CHORDS = 128;
+    public static final int MAX_POOL = 64;
 
-    public int schema = 2;
+    public int schema = 3;
     public boolean debug = false;
 
-    /**
-     * 通用按键池：这里列出的按钮才能被和弦使用。
-     * 留空表示不限制（兼容旧配置）。
-     */
+    /** 修饰键池：和弦里的“按住键”只能从这里选。 */
+    public List<String> modifierPool = new ArrayList<>();
+
+    /** 触发键池：和弦里的“轻按键”只能从这里选。 */
+    public List<String> triggerPool = new ArrayList<>();
+
+    /** 0.5–0.7 的旧字段，仅用于迁移。 */
+    @Deprecated
     public List<String> keyPool = new ArrayList<>();
 
     public List<ChordDefinition> chords = new ArrayList<>();
@@ -30,30 +32,29 @@ public final class ChordsConfig {
     public static ChordsConfig createDefault() {
         ChordsConfig config = new ChordsConfig();
 
-        // 编号就是列表顺序，默认把标准手柄按钮全部预填，用户不需要手输 ID
-        config.keyPool.add("controlify:button/dpad_up");        // 1
-        config.keyPool.add("controlify:button/dpad_down");      // 2
-        config.keyPool.add("controlify:button/dpad_left");      // 3
-        config.keyPool.add("controlify:button/dpad_right");     // 4
-        config.keyPool.add("controlify:button/south");          // 5  A
-        config.keyPool.add("controlify:button/east");           // 6  B
-        config.keyPool.add("controlify:button/west");           // 7  X
-        config.keyPool.add("controlify:button/north");          // 8  Y
-        config.keyPool.add("controlify:button/left_shoulder");  // 9  LB
-        config.keyPool.add("controlify:button/right_shoulder"); // 10 RB
-        config.keyPool.add("controlify:button/left_stick");     // 11 L3
-        config.keyPool.add("controlify:button/right_stick");    // 12 R3
-        config.keyPool.add("controlify:button/start");          // 13
-        config.keyPool.add("controlify:button/back");           // 14
-        config.keyPool.add("controlify:button/guide");          // 15
-        config.keyPool.add("controlify:button/touchpad");       // 16
+        // 修饰键池：适合“一直按住”的键
+        config.modifierPool.add("controlify:button/dpad_up");
+        config.modifierPool.add("controlify:button/dpad_down");
+        config.modifierPool.add("controlify:button/dpad_left");
+        config.modifierPool.add("controlify:button/dpad_right");
+        config.modifierPool.add("controlify:button/left_shoulder");
+        config.modifierPool.add("controlify:button/right_shoulder");
+        config.modifierPool.add("controlify:button/left_stick");
+        config.modifierPool.add("controlify:button/right_stick");
 
-        // 一条示例（默认关闭），其余留空，由界面里的“新增”页自行添加
+        // 触发键池：适合“轻按一下”的键
+        config.triggerPool.add("controlify:button/south");
+        config.triggerPool.add("controlify:button/east");
+        config.triggerPool.add("controlify:button/west");
+        config.triggerPool.add("controlify:button/north");
+        config.triggerPool.add("controlify:button/start");
+        config.triggerPool.add("controlify:button/back");
+
         ChordDefinition example = new ChordDefinition();
         example.enabled = false;
         example.name = "LB + A 交换副手";
-        example.modifiers.add("#9");
-        example.triggers.add("#5");
+        example.modifiers.add("controlify:button/left_shoulder");
+        example.triggers.add("controlify:button/south");
         example.actionType = ChordDefinition.ActionType.KEY_MAPPING;
         example.actionValue = "key.swapOffhand";
         config.chords.add(example);
@@ -63,12 +64,22 @@ public final class ChordsConfig {
     }
 
     public void normalize() {
-        keyPool = clean(keyPool, Integer.MAX_VALUE);
+        modifierPool = clean(modifierPool, MAX_POOL);
+        triggerPool = clean(triggerPool, MAX_POOL);
+
+        // 0.5–0.7 → 0.8 迁移：旧的单一 keyPool 同时并入两个池
+        List<String> legacy = clean(keyPool, MAX_POOL);
+        if (modifierPool.isEmpty() && !legacy.isEmpty()) {
+            modifierPool = new ArrayList<>(legacy);
+        }
+        if (triggerPool.isEmpty() && !legacy.isEmpty()) {
+            triggerPool = new ArrayList<>(legacy);
+        }
+        keyPool = new ArrayList<>();
 
         if (chords == null) {
             chords = new ArrayList<>();
         }
-        // 不再补齐/截断到固定 8 条；只做去空与上限保护
         chords.removeIf(chord -> chord == null);
         if (chords.isEmpty()) {
             chords.add(new ChordDefinition());
@@ -81,7 +92,6 @@ public final class ChordsConfig {
             chord.modifiers = clean(chord.modifiers, MAX_MODIFIERS);
             chord.triggers = clean(chord.triggers, MAX_TRIGGERS);
 
-            // 0.3.x → 0.4+ 迁移：旧的单个 trigger 并入 triggers
             if (chord.triggers.isEmpty() && chord.trigger != null && !chord.trigger.isBlank()) {
                 chord.triggers.add(chord.trigger.trim());
             }

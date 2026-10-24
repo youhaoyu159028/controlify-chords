@@ -129,8 +129,8 @@ public final class ChordManager {
         RAW_PRESS_TICKS.clear();
 
         ChordsConfig config = ConfigManager.get();
-        List<String> pool = config.keyPool;
-        Set<String> poolSet = new HashSet<>(pool);
+        Set<String> modifierPool = new HashSet<>(config.modifierPool);
+        Set<String> triggerPool = new HashSet<>(config.triggerPool);
         Set<String> signatures = new LinkedHashSet<>();
 
         int count = config.chords.size();
@@ -151,11 +151,11 @@ public final class ChordManager {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 已启用但修饰键或触发键列表为空，跳过", i + 1);
                 continue;
             }
-            List<String> modifiers = resolveAll(chord.modifiers, pool, i + 1, "修饰键");
+            List<String> modifiers = resolveAll(chord.modifiers, config.modifierPool, i + 1, "修饰键");
             if (modifiers == null) {
                 continue;
             }
-            List<String> triggers = resolveAll(chord.triggers, pool, i + 1, "触发键");
+            List<String> triggers = resolveAll(chord.triggers, config.triggerPool, i + 1, "触发键");
             if (triggers == null) {
                 continue;
             }
@@ -174,13 +174,13 @@ public final class ChordManager {
                 ControlifyChords.LOGGER.warn("[Chords] #{} 含有非物理按键 ID（旧版 key_N / controlify:jump 已不支持），跳过", i + 1);
                 continue;
             }
-            if (!poolSet.isEmpty()) {
-                boolean outside = modifiers.stream().anyMatch(id -> !poolSet.contains(id))
-                        || triggers.stream().anyMatch(id -> !poolSet.contains(id));
-                if (outside) {
-                    ControlifyChords.LOGGER.warn("[Chords] #{} 用了不在“按键池”里的按钮，跳过（先在通用页把按钮加进池）", i + 1);
-                    continue;
-                }
+            if (!modifierPool.isEmpty() && modifiers.stream().anyMatch(id -> !modifierPool.contains(id))) {
+                ControlifyChords.LOGGER.warn("[Chords] #{} 的修饰键不在“修饰键池”里，跳过", i + 1);
+                continue;
+            }
+            if (!triggerPool.isEmpty() && triggers.stream().anyMatch(id -> !triggerPool.contains(id))) {
+                ControlifyChords.LOGGER.warn("[Chords] #{} 的触发键不在“触发键池”里，跳过", i + 1);
+                continue;
             }
             resolvedModifiers.set(i, modifiers);
             resolvedTriggers.set(i, triggers);
@@ -255,8 +255,8 @@ public final class ChordManager {
             RUNTIMES.add(new Runtime(i, chord, modifiers, triggers, requiresOrder));
         }
 
-        ControlifyChords.LOGGER.info("[Chords] 已装载 {} 条和弦，监听 {} 个按钮（按键池 {} 个）",
-                RUNTIMES.size(), WATCH_RAW.size(), pool.size());
+        ControlifyChords.LOGGER.info("[Chords] 已装载 {} 条和弦，监听 {} 个按钮（修饰键池 {} 个 / 触发键池 {} 个）",
+                RUNTIMES.size(), WATCH_RAW.size(), config.modifierPool.size(), config.triggerPool.size());
     }
 
     /**
