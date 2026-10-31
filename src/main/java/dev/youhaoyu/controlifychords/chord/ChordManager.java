@@ -64,11 +64,13 @@ public final class ChordManager {
 
         SUPPRESSED.clear();
         if (client.player == null) {
+            resetInputState();
             return;
         }
 
         Optional<ControllerEntity> current = ControlifyApi.get().getCurrentController();
         if (current.isEmpty()) {
+            resetInputState();
             return;
         }
         ControllerEntity controller = current.get();
@@ -81,6 +83,7 @@ public final class ChordManager {
         // 注意：getButtons() 返回的是“这个手柄有哪些按钮”，不是“哪些正被按下”，
         // 必须用 isButtonDown 判断按下状态。
         if (controller.input().isEmpty()) {
+            resetInputState();
             return;
         }
         ControllerStateView now = controller.input().get().stateNow();
@@ -120,6 +123,16 @@ public final class ChordManager {
             // 无有效输入
         }
         return false;
+    }
+
+    /**
+     * 丢失玩家或当前控制器时清空输入瞬态状态，避免重新进入世界/重连后
+     * 把上一次会话中的按键按住时间、待执行触发或冷却带入新会话。
+     */
+    private static void resetInputState() {
+        controllerUid = null;
+        RAW_PRESS_TICKS.clear();
+        RUNTIMES.forEach(Runtime::resetTransient);
     }
 
     private static void rebuild() {
@@ -322,6 +335,7 @@ public final class ChordManager {
 
         private void resetTransient() {
             clearPending();
+            cooldownUntil = -1;
         }
 
         private void clearPending() {
